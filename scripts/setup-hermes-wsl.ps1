@@ -1,0 +1,7 @@
+Write-Host "Installiere Hermes in WSL2 über den offiziellen Installer …"
+Write-Host "Falls WSL2 noch fehlt: wsl --install"
+Write-Host "Danach im Linux-Terminal ausführen:"
+Write-Host "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash"
+Write-Host "source ~/.bashrc"
+Write-Host "hermes setup"
+Write-Host "hermes"
