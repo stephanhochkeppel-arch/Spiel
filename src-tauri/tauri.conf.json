@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../app",
+    "distDir": "../app"
+  },
+  "package": {
+    "productName": "Hermes Window",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "open": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "world.happylearning.hermeswindow",
+      "targets": ["msi"]
+    },
+    "windows": [
+      {
+        "title": "Hermes Window",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 960,
+        "minHeight": 680,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  }
+}
