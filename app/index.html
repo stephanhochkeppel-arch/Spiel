@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hermes Window</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand-card">
+          <div class="brand-icon">☤</div>
+          <div>
+            <div class="brand-title">Hermes Window</div>
+            <div class="brand-subtitle">Android + Windows</div>
+          </div>
+        </div>
+
+        <button class="new-chat-btn" id="newChatBtn">＋ Neuer Chat</button>
+
+        <div class="mini-stats">
+          <div class="stat-card">
+            <span class="stat-label">Status</span>
+            <strong>bereit</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Modus</span>
+            <strong id="modeLabel">lädt…</strong>
+          </div>
+        </div>
+
+        <div class="section-label">Chats</div>
+        <div class="session-list" id="sessionList"></div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="icon-btn mobile-only" id="toggleSidebarBtn">☰</button>
+            <div>
+              <h1>Hermes App</h1>
+              <p>Eine schöne Oberfläche für Android, Windows und später echten Hermes-Agent</p>
+            </div>
+          </div>
+          <div class="pill-row">
+            <span class="pill active">Hybrid</span>
+            <span class="pill">Android</span>
+            <span class="pill">Windows</span>
+          </div>
+        </header>
+
+        <section class="quick-actions">
+          <button class="action-card" data-prompt="Plane eine Recherche zu meinem Thema.">
+            <span>🔎</span>
+            <div>
+              <strong>Recherche</strong>
+              <small>Strategie und Quellen</small>
+            </div>
+          </button>
+          <button class="action-card" data-prompt="Hilf mir beim Programmieren dieser App.">
+            <span>💻</span>
+            <div>
+              <strong>Code</strong>
+              <small>Architektur und Dateien</small>
+            </div>
+          </button>
+          <button class="action-card" data-prompt="Richte eine tägliche Automation ein.">
+            <span>⏰</span>
+            <div>
+              <strong>Automation</strong>
+              <small>Wiederkehrende Aufgaben</small>
+            </div>
+          </button>
+          <button class="action-card" data-prompt="Zeige mir Skills und Memory-Ideen.">
+            <span>🧠</span>
+            <div>
+              <strong>Skills</strong>
+              <small>Wissen und Wiederverwendung</small>
+            </div>
+          </button>
+        </section>
+
+        <section class="content-grid">
+          <div class="chat-card">
+            <div class="chat-header">
+              <div>
+                <strong id="chatTitle">Lade Chat…</strong>
+                <small id="chatSubtitle">Verbinde…</small>
+              </div>
+              <span class="status-dot">● live</span>
+            </div>
+            <div class="messages" id="messages"></div>
+            <form class="composer" id="composerForm">
+              <textarea id="messageInput" placeholder="Schreibe an deinen Agenten …" rows="1"></textarea>
+              <button type="submit" class="send-btn">Senden</button>
+            </form>
+          </div>
+
+          <aside class="right-rail">
+            <div class="rail-card">
+              <h3>Live-Status</h3>
+              <div class="status-grid">
+                <div>
+                  <span>Plattform</span>
+                  <strong>Android + Windows</strong>
+                </div>
+                <div>
+                  <span>Backend</span>
+                  <strong id="backendLabel">lädt…</strong>
+                </div>
+                <div>
+                  <span>Hermes</span>
+                  <strong>kompatibel</strong>
+                </div>
+                <div>
+                  <span>Packaging</span>
+                  <strong>bereit</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="rail-card">
+              <h3>Aktivität</h3>
+              <ul class="activity-list">
+                <li><span>🌐</span><div><strong>Web / API</strong><small>OpenAI-kompatibler Proxy möglich</small></div></li>
+                <li><span>📱</span><div><strong>Android</strong><small>Capacitor-Vorlage vorhanden</small></div></li>
+                <li><span>🪟</span><div><strong>Windows</strong><small>Tauri-Vorlage vorhanden</small></div></li>
+                <li><span>🧩</span><div><strong>Skills</strong><small>UI dafür vorbereitet</small></div></li>
+              </ul>
+            </div>
+
+            <div class="rail-card">
+              <h3>Hinweis</h3>
+              <p>
+                Für echten Hermes auf Windows ist WSL2 der saubere Weg. Auf Android ist Termux der beste Weg für den Core.
+                Diese App gibt dir darüber die schöne gemeinsame Oberfläche.
+              </p>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
