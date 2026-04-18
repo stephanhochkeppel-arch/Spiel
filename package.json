@@ -1,0 +1,15 @@
+{
+  "name": "hermes-window",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hermes-inspirierte Chat-App für Android und Windows mit schöner Oberfläche und optionaler Hermes-OpenAI-Kompatibilität.",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  }
+}
