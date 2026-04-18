@@ -1,0 +1,8 @@
+{
+  "appId": "world.happylearning.hermeswindow",
+  "appName": "Hermes Window",
+  "webDir": "app",
+  "server": {
+    "androidScheme": "https"
+  }
+}
