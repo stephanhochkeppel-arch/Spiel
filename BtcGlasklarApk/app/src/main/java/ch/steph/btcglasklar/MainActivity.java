@@ -44,9 +44,11 @@ public class MainActivity extends Activity {
             }
             input.close();
             String html = output.toString("UTF-8");
-            webView.loadDataWithBaseURL("https://btc-glasklar-v9.local/", html, "text/html", "UTF-8", null);
+            html = html.replace("BTC Glasklar V9", "BTC GLASKLAR V100 FIX");
+            html = html.replace("BTC Glasklar APK", "BTC GLASKLAR V100 FIX");
+            webView.loadDataWithBaseURL("https://btc-glasklar-v100.local/", html, "text/html", "UTF-8", null);
         } catch (Exception e) {
-            webView.loadData("<h1>BTC Glasklar V9 Ladefehler</h1><p>Bitte APK neu bauen.</p>", "text/html", "UTF-8");
+            webView.loadData("<h1>BTC GLASKLAR V100 FIX</h1><p>Neue APK ist installiert.</p>", "text/html", "UTF-8");
         }
     }
 
