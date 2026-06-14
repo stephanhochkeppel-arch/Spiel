@@ -13,6 +13,7 @@ const { VPIN } = require('../src/indicators/vpin');
 const { OIRegime } = require('../src/indicators/oi_regime');
 const { FundingExtreme } = require('../src/indicators/funding');
 const { VolatilityRegime } = require('../src/indicators/volatility');
+const { getLiveState } = require('./sim');
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
@@ -240,6 +241,12 @@ app.post('/api/chat', async (req, res) => {
 
   writeStore(store);
   res.json({ session, assistantMessage });
+});
+
+// ─── Live Dashboard (simulation) ─────────────────────────────────────────────
+
+app.get('/api/dashboard/live', (_req, res) => {
+  res.json(getLiveState());
 });
 
 // ─── BTC Microstructure Indicator API ────────────────────────────────────────
