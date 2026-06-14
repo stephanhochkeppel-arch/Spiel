@@ -2,455 +2,537 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BTC Signale">
   <meta name="theme-color" content="#060608">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/btc-icon.svg">
   <title>BTC Signale</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     :root{
-      --bg:#060608;
-      --card:#0d0d1b;
-      --border:rgba(255,255,255,.07);
-      --long:#00cc88;
-      --short:#ff2244;
-      --neutral:#445599;
-      --gold:#ffd700;
-      --text:#e8eaff;
-      --muted:#556688;
-      --r:18px;
-      --pt:env(safe-area-inset-top,0px);
-      --pb:env(safe-area-inset-bottom,0px);
+      --bg:#060608; --card:#0d0d1b; --bdr:rgba(255,255,255,.07);
+      --long:#00cc88; --short:#ff2244; --neu:#445599; --gold:#ffd700;
+      --txt:#e8eaff; --dim:#556688; --r:18px;
+      --pt:env(safe-area-inset-top,0px); --pb:env(safe-area-inset-bottom,0px);
     }
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
       font-family:-apple-system,system-ui,'Segoe UI',Helvetica,sans-serif}
 
-    /* ── Layout shell ── */
-    .app{
-      display:flex;flex-direction:column;height:100dvh;
-      padding:calc(var(--pt) + 10px) 12px calc(var(--pb) + 8px);
-      gap:8px;max-width:520px;margin:0 auto
-    }
+    .app{display:flex;flex-direction:column;height:100dvh;
+      padding:calc(var(--pt)+10px) 12px calc(var(--pb)+8px);
+      gap:8px;max-width:520px;margin:0 auto}
 
-    /* ── Header ── */
+    /* ─ Header ─ */
     .hdr{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .hdr-logo{font-size:17px;font-weight:800;letter-spacing:.04em;color:#fff}
-    .hdr-r{display:flex;align-items:center;gap:10px}
+    .logo{font-size:17px;font-weight:800;letter-spacing:.04em;color:#fff}
+    .hdr-r{display:flex;align-items:center;gap:8px}
     .live{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--long);
-      animation:liveblink 2.5s ease-in-out infinite}
-    .live.off{color:var(--muted);animation:none}
-    @keyframes liveblink{0%,100%{opacity:1}50%{opacity:.25}}
-    .clk{font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:.04em}
-    .cfg-btn{background:none;border:none;color:var(--muted);font-size:17px;
-      cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1}
+      animation:blink 2.5s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+    .clk{font-size:11px;font-variant-numeric:tabular-nums;color:var(--dim);letter-spacing:.04em}
+    .ibtn{background:none;border:none;font-size:17px;cursor:pointer;padding:2px 4px;
+      border-radius:6px;color:var(--dim);line-height:1;display:none;align-items:center}
+    .ibtn.show{display:flex}
 
-    /* ── Signal cards ── */
-    .card{
-      background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+    /* ─ Signal cards ─ */
+    .card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);
       padding:13px 16px 11px;flex:1;min-height:0;
       display:flex;flex-direction:column;gap:5px;
-      transition:border-color .6s,box-shadow .6s;overflow:hidden
-    }
+      transition:border-color .6s,box-shadow .6s;overflow:hidden}
     .card.c-long {border-color:rgba(0,204,136,.22)}
     .card.c-short{border-color:rgba(255,34,68,.22)}
-    .card.c-gold {
-      border-color:rgba(255,215,0,.42);
-      animation:goldpulse 2.4s ease-in-out infinite
-    }
-    @keyframes goldpulse{
+    .card.c-gold {border-color:rgba(255,215,0,.42);animation:gp 2.4s ease-in-out infinite}
+    @keyframes gp{
       0%,100%{box-shadow:0 0 18px rgba(255,215,0,.12),inset 0 1px 0 rgba(255,215,0,.04)}
-      50%    {box-shadow:0 0 46px rgba(255,215,0,.36),inset 0 1px 0 rgba(255,215,0,.10)}
-    }
-    .card-hdr{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
-    .card-name{font-size:10px;font-weight:800;letter-spacing:.22em;color:var(--muted)}
-    .card-tf  {font-size:9px;color:rgba(85,102,136,.55);letter-spacing:.05em}
+      50%    {box-shadow:0 0 46px rgba(255,215,0,.38),inset 0 1px 0 rgba(255,215,0,.10)}}
 
-    /* Direction row */
-    .dir-row{display:flex;align-items:center;gap:10px;flex-shrink:0}
-    .dir{
-      font-size:clamp(40px,13.5vw,62px);font-weight:900;
-      letter-spacing:.01em;line-height:1;
-      transition:color .5s,text-shadow .5s
-    }
+    .chdr{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
+    .cname{font-size:10px;font-weight:800;letter-spacing:.22em;color:var(--dim)}
+    .ctf  {font-size:9px;color:rgba(85,102,136,.55);letter-spacing:.05em}
+
+    .drow{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .dir{font-size:clamp(40px,13.5vw,62px);font-weight:900;
+      letter-spacing:.01em;line-height:1;transition:color .5s,text-shadow .5s}
     .dir.long   {color:var(--long); text-shadow:0 0 30px rgba(0,204,136,.45)}
     .dir.short  {color:var(--short);text-shadow:0 0 30px rgba(255,34,68,.45)}
-    .dir.neutral{color:var(--neutral);text-shadow:none}
+    .dir.neutral{color:var(--neu);  text-shadow:none}
 
-    /* R:R badge */
-    .rr{
-      font-size:10px;font-weight:700;letter-spacing:.06em;
-      padding:3px 8px;border-radius:20px;white-space:nowrap;
-      background:rgba(255,215,0,.1);color:var(--gold);
-      border:1px solid rgba(255,215,0,.25);
-      opacity:0;transition:opacity .4s;align-self:center
-    }
+    .rr{font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 8px;
+      border-radius:20px;white-space:nowrap;background:rgba(255,215,0,.1);
+      color:var(--gold);border:1px solid rgba(255,215,0,.25);
+      opacity:0;transition:opacity .4s;align-self:center}
     .rr.show{opacity:1}
 
-    /* Score bar */
-    .bar-bg{
-      width:100%;height:9px;background:rgba(255,255,255,.05);
-      border-radius:5px;overflow:hidden;flex-shrink:0
-    }
-    .bar-fill{
-      height:100%;border-radius:5px;width:0%;
-      transition:width .9s cubic-bezier(.25,1,.5,1),background .55s
-    }
+    .bar-bg{width:100%;height:9px;background:rgba(255,255,255,.05);
+      border-radius:5px;overflow:hidden;flex-shrink:0}
+    .bar-fill{height:100%;border-radius:5px;width:0%;
+      transition:width .9s cubic-bezier(.25,1,.5,1),background .55s}
 
-    /* Score row */
-    .score-row{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
-    .score-wrap{display:flex;align-items:baseline;gap:2px}
-    .score-val{
-      font-size:clamp(25px,8.5vw,40px);font-weight:800;
-      font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;
-      transition:color .5s
-    }
-    .score-sfx{font-size:12px;font-weight:500;color:var(--muted)}
-    .lbl{
-      font-size:12px;font-weight:800;letter-spacing:.14em;transition:color .4s
-    }
-    .lbl.goldgrube{color:var(--gold)}
-    .lbl.stark    {color:var(--long)}
-    .lbl.aktiv    {color:#55bb88}
-    .lbl.warten   {color:var(--muted)}
+    .srow{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
+    .snum{display:flex;align-items:baseline;gap:2px}
+    .sval{font-size:clamp(25px,8.5vw,40px);font-weight:800;
+      font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;transition:color .5s}
+    .ssfx{font-size:12px;font-weight:500;color:var(--dim)}
+    .slbl{font-size:12px;font-weight:800;letter-spacing:.14em;transition:color .4s}
+    .slbl.g{color:var(--gold)}
+    .slbl.s{color:var(--long)}
+    .slbl.a{color:#55bb88}
+    .slbl.w{color:var(--dim)}
 
-    /* Recommendation line */
-    .rec{
-      font-size:10px;color:rgba(85,102,136,.75);line-height:1.4;
-      overflow:hidden;display:-webkit-box;
-      -webkit-line-clamp:2;-webkit-box-orient:vertical;
-      flex:1;min-height:0
-    }
+    .rec{font-size:10px;color:rgba(85,102,136,.75);line-height:1.4;
+      overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+      -webkit-box-orient:vertical;flex:1;min-height:0}
 
-    /* ── Sub-indicator grid ── */
-    .ind-grid{
-      display:grid;grid-template-columns:repeat(3,1fr);
-      gap:5px;flex-shrink:0
-    }
-    .chip{
-      background:var(--card);border:1px solid var(--border);
-      border-radius:11px;padding:6px 10px;
-      display:flex;flex-direction:column;gap:2px
-    }
-    .ck{font-size:8px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
-    .cv{
-      font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
-      color:var(--text);transition:color .35s
-    }
-    .cv.long  {color:var(--long)}
-    .cv.short {color:var(--short)}
-    .cv.gold  {color:var(--gold)}
-    .cv.orange{color:#ff8833}
+    /* ─ Chips ─ */
+    .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;flex-shrink:0}
+    .chip{background:var(--card);border:1px solid var(--bdr);border-radius:11px;
+      padding:6px 10px;display:flex;flex-direction:column;gap:2px}
+    .ck{font-size:8px;font-weight:700;letter-spacing:.12em;color:var(--dim)}
+    .cv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
+      color:var(--txt);transition:color .35s}
+    .cv.l{color:var(--long)} .cv.s{color:var(--short)}
+    .cv.g{color:var(--gold)} .cv.o{color:#ff8833}
 
-    /* ── Status + footer ── */
-    .sbar{
-      display:flex;justify-content:space-between;
-      font-size:9px;color:rgba(85,102,136,.45);
-      flex-shrink:0;padding:0 2px
-    }
-    .foot{
-      font-size:8px;color:rgba(85,102,136,.3);
-      text-align:center;letter-spacing:.04em;flex-shrink:0
-    }
+    /* ─ Status / footer ─ */
+    .sbar{display:flex;justify-content:space-between;font-size:9px;
+      color:rgba(85,102,136,.45);flex-shrink:0;padding:0 2px}
+    .foot{font-size:8px;color:rgba(85,102,136,.3);text-align:center;
+      letter-spacing:.04em;flex-shrink:0}
     .foot a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(85,102,136,.2)}
 
-    /* ── Settings modal ── */
-    .modal-ov{
-      position:fixed;inset:0;background:rgba(0,0,0,.88);
-      display:none;align-items:center;justify-content:center;
-      z-index:100;padding:20px
-    }
-    .modal-ov.open{display:flex}
-    .modal{
-      background:#0f0f22;border:1px solid rgba(255,255,255,.1);
-      border-radius:16px;padding:24px;width:100%;max-width:380px
-    }
-    .modal h2{font-size:15px;font-weight:700;margin-bottom:16px}
-    .modal label{font-size:10px;color:var(--muted);display:block;
-      margin-bottom:6px;letter-spacing:.05em}
-    .modal input{
-      width:100%;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);border-radius:8px;
-      color:var(--text);font-size:14px;padding:10px 12px;outline:none;
-      font-family:inherit
-    }
-    .modal input:focus{border-color:var(--long)}
-    .modal-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}
-    .modal-hint code{color:rgba(200,220,200,.7);font-size:10px}
-    .modal-btns{display:flex;gap:8px;margin-top:18px}
-    .mbtn{
-      flex:1;padding:10px;border:1px solid rgba(255,255,255,.1);
-      border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
-      background:rgba(255,255,255,.05);color:var(--text);font-family:inherit
-    }
-    .mbtn.ok{background:var(--long);color:#000;border-color:transparent}
+    /* ─ Install banner ─ */
+    .inst-bar{display:none;align-items:center;justify-content:space-between;
+      background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);
+      border-radius:12px;padding:10px 14px;flex-shrink:0;gap:8px}
+    .inst-bar.show{display:flex}
+    .inst-txt{font-size:11px;color:var(--gold);font-weight:600}
+    .inst-btn{background:var(--gold);color:#000;border:none;border-radius:8px;
+      padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+    .inst-x{background:none;border:none;color:var(--dim);font-size:16px;
+      cursor:pointer;padding:0 2px;line-height:1}
   </style>
 </head>
 <body>
 <div class="app">
 
   <header class="hdr">
-    <span class="hdr-logo">₿ BTC SIGNALE</span>
+    <span class="logo">₿ BTC SIGNALE</span>
     <div class="hdr-r">
-      <span class="live" id="liveBadge">⬤ LIVE</span>
+      <span class="live" id="live">⬤ LIVE</span>
       <span class="clk" id="clk">--:--:--</span>
-      <button class="cfg-btn" id="cfgBtn" title="Einstellungen">⚙</button>
+      <button class="ibtn" id="ibtn" title="Installieren">📲</button>
     </div>
   </header>
 
-  <!-- PHASE Signal -->
+  <!-- Install banner (appears when Chrome detects installable PWA) -->
+  <div class="inst-bar" id="instBar">
+    <span class="inst-txt">📲 App zum Startbildschirm hinzufügen</span>
+    <button class="inst-btn" id="instOk">Installieren</button>
+    <button class="inst-x" id="instNo">✕</button>
+  </div>
+
+  <!-- PHASE -->
   <div class="card" id="phaseCard">
-    <div class="card-hdr">
-      <span class="card-name">PHASE</span>
-      <span class="card-tf">30 Min – 6 Std</span>
-    </div>
-    <div class="dir-row">
+    <div class="chdr"><span class="cname">PHASE</span><span class="ctf">30 Min – 6 Std</span></div>
+    <div class="drow">
       <div class="dir neutral" id="phaseDir">––</div>
       <div class="rr" id="phaseRR"></div>
     </div>
     <div class="bar-bg"><div class="bar-fill" id="phaseBar"></div></div>
-    <div class="score-row">
-      <div class="score-wrap">
-        <span class="score-val" id="phaseVal">––</span>
-        <span class="score-sfx">/100</span>
-      </div>
-      <span class="lbl warten" id="phaseLbl">WARTEN</span>
+    <div class="srow">
+      <div class="snum"><span class="sval" id="phaseVal">––</span><span class="ssfx">/100</span></div>
+      <span class="slbl w" id="phaseLbl">WARTEN</span>
     </div>
     <div class="rec" id="phaseRec"></div>
   </div>
 
-  <!-- WELLE Signal -->
+  <!-- WELLE -->
   <div class="card" id="waveCard">
-    <div class="card-hdr">
-      <span class="card-name">WELLE</span>
-      <span class="card-tf">15 – 45 Min</span>
-    </div>
-    <div class="dir-row">
+    <div class="chdr"><span class="cname">WELLE</span><span class="ctf">15 – 45 Min</span></div>
+    <div class="drow">
       <div class="dir neutral" id="waveDir">––</div>
       <div class="rr" id="waveRR"></div>
     </div>
     <div class="bar-bg"><div class="bar-fill" id="waveBar"></div></div>
-    <div class="score-row">
-      <div class="score-wrap">
-        <span class="score-val" id="waveVal">––</span>
-        <span class="score-sfx">/100</span>
-      </div>
-      <span class="lbl warten" id="waveLbl">WARTEN</span>
+    <div class="srow">
+      <div class="snum"><span class="sval" id="waveVal">––</span><span class="ssfx">/100</span></div>
+      <span class="slbl w" id="waveLbl">WARTEN</span>
     </div>
     <div class="rec" id="waveRec"></div>
   </div>
 
-  <!-- Sub-indicator chips -->
-  <div class="ind-grid">
-    <div class="chip"><span class="ck">OFI z</span><span class="cv" id="iOfi">–</span></div>
-    <div class="chip"><span class="ck">CVD</span><span class="cv" id="iCvd">–</span></div>
-    <div class="chip"><span class="ck">VOL</span><span class="cv" id="iVol">–</span></div>
+  <!-- Sub-indicators -->
+  <div class="chips">
+    <div class="chip"><span class="ck">OFI z</span>  <span class="cv" id="iOfi">–</span></div>
+    <div class="chip"><span class="ck">CVD</span>    <span class="cv" id="iCvd">–</span></div>
+    <div class="chip"><span class="ck">VOL</span>    <span class="cv" id="iVol">–</span></div>
     <div class="chip"><span class="ck">OI REGIME</span><span class="cv" id="iOi">–</span></div>
     <div class="chip"><span class="ck">FUNDING</span><span class="cv" id="iFund">–</span></div>
     <div class="chip"><span class="ck">SESSION</span><span class="cv" id="iSess">–</span></div>
   </div>
 
   <div class="sbar">
-    <span id="sTxt">Verbinde…</span>
+    <span id="sTxt">Starte Simulation…</span>
     <span id="sTime"></span>
   </div>
 
-  <div class="foot">
-    ~52–58% Trefferquote · Kein Finanzrat · SIMULATION ·
-    <a href="/index.html">Chat ↗</a>
-  </div>
-</div>
-
-<!-- Settings modal -->
-<div class="modal-ov" id="modalOv">
-  <div class="modal">
-    <h2>⚙ Backend-URL</h2>
-    <label>Backend-URL (leer lassen für Web-Modus)</label>
-    <input type="url" id="urlInp" placeholder="http://localhost:8787"
-      autocomplete="off" autocorrect="off" spellcheck="false">
-    <p class="modal-hint">
-      Android / Termux: <code>http://localhost:8787</code><br>
-      Web-Modus (gleicher Server): Feld leer lassen.
-    </p>
-    <div class="modal-btns">
-      <button class="mbtn" id="cancelBtn">Abbrechen</button>
-      <button class="mbtn ok" id="saveBtn">Speichern</button>
-    </div>
-  </div>
+  <div class="foot">~52–58% Trefferquote · Kein Finanzrat · SIMULATION · <a href="/index.html">Chat ↗</a></div>
 </div>
 
 <script>
-const STORE_KEY = 'btc_backend';
-const POLL_MS   = 5000;
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIMULATION ENGINE  (Ornstein-Uhlenbeck, no backend needed)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function base()       { return localStorage.getItem(STORE_KEY) || ''; }
-function api(path)    { return base() + path; }
-
-// ── Settings modal ──────────────────────────────────────────────────────────
-const modalOv  = document.getElementById('modalOv');
-document.getElementById('cfgBtn').addEventListener('click', () => {
-  document.getElementById('urlInp').value = base();
-  modalOv.classList.add('open');
-});
-document.getElementById('cancelBtn').addEventListener('click', () => modalOv.classList.remove('open'));
-document.getElementById('saveBtn').addEventListener('click', () => {
-  const v = document.getElementById('urlInp').value.trim().replace(/\/$/, '');
-  v ? localStorage.setItem(STORE_KEY, v) : localStorage.removeItem(STORE_KEY);
-  modalOv.classList.remove('open');
-  fetchUpdate();
-});
-modalOv.addEventListener('click', e => { if (e.target === modalOv) modalOv.classList.remove('open'); });
-
-// ── Clock ───────────────────────────────────────────────────────────────────
-function tick() {
-  document.getElementById('clk').textContent =
-    new Date().toLocaleTimeString('de-CH', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+function randn() {
+  const u = 1 - Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
 }
-setInterval(tick, 1000);
-tick();
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-// ── Visual helpers ──────────────────────────────────────────────────────────
-const DIR_TEXT = { long:'LONG', short:'SHORT', neutral:'NEUTRAL' };
+// Randomised startup state → dashboard shows live dynamics immediately
+const _sr = Math.random() < 0.40 ? 'bull' : Math.random() < 0.55 ? 'bear' : 'ranging';
+const _so = clamp((_sr==='bull'?0.9:_sr==='bear'?-0.9:0) + (Math.random()-.5)*1.4, -3.8, 3.8);
 
-function signalColor(dir, score) {
-  if (dir === 'long')  return score >= 83 ? '#ffd700' : '#00cc88';
-  if (dir === 'short') return '#ff2244';
+const sim = {
+  t:      Date.now() - 60000,   // pretend 60 s already elapsed
+  regime: _sr,
+  rTTL:   60 + Math.random() * 350,
+  ofiZ:   _so,
+  cvd:    _so * 300 + (Math.random()-.5)*200,
+  depth:  clamp(Math.exp(_so*.35)*(0.85+Math.random()*.3), 0.25, 4.2),
+  vol:    Math.random()<.28?'compressed':'normal',
+  vTTL:   60 + Math.random()*350,
+  oi:     ({bull:'long_build',bear:'short_build',ranging:'neutral'})[_sr],
+  fund:   (_sr==='bull'?.00035:_sr==='bear'?-.00010:.0001)+(Math.random()-.5)*.0002,
+  fCons:  0, fSig:'neutral', fExt:false, fPer:false,
+  price:  _so*.002+(Math.random()-.5)*.002,
+};
+
+const BIAS = { bull:1.3, bear:-1.3, ranging:0 };
+
+function simTick() {
+  const now = Date.now();
+  const dt  = clamp((now - sim.t)/1000, 0, 30);
+  sim.t = now;
+  if (dt < 0.001) return;
+
+  // Regime (Markov)
+  sim.rTTL -= dt;
+  if (sim.rTTL <= 0) {
+    const r = Math.random();
+    sim.regime = ({
+      ranging: r<.38?'bull':r<.68?'bear':'ranging',
+      bull:    r<.52?'ranging':r<.72?'bear':'bull',
+      bear:    r<.52?'ranging':r<.72?'bull':'bear',
+    })[sim.regime];
+    sim.rTTL = 150 + Math.random()*550;
+  }
+
+  const b = BIAS[sim.regime], sq = Math.sqrt(dt);
+
+  // OFI z-score OU
+  sim.ofiZ += 0.15*(b - sim.ofiZ)*dt + 0.45*randn()*sq;
+  sim.ofiZ  = clamp(sim.ofiZ, -3.8, 3.8);
+
+  // CVD (integrates OFI)
+  sim.cvd += sim.ofiZ*100*dt + 50*randn()*sq;
+  sim.cvd *= Math.pow(0.982, dt);
+
+  // Depth ratio (bid/ask, correlated with OFI)
+  sim.depth += 0.2*(Math.exp(sim.ofiZ*.35) - sim.depth)*dt + 0.05*randn()*sq;
+  sim.depth  = clamp(sim.depth, 0.25, 4.2);
+
+  // Volatility cycle
+  sim.vTTL -= dt;
+  if (sim.vTTL <= 0) {
+    sim.vol  = sim.vol==='compressed'?'expanded':sim.vol==='expanded'?'normal':(Math.random()<.32?'compressed':'normal');
+    sim.vTTL = 90 + Math.random()*480;
+  }
+
+  // OI regime (~4% chance / s)
+  if (Math.random() < clamp(0.04*dt, 0, 0.25)) {
+    const p = {
+      bull:    ['long_build','long_build','long_build','short_cover'],
+      bear:    ['short_build','short_build','short_build','long_exit'],
+      ranging: ['neutral','long_build','short_build','neutral','long_exit'],
+    }[sim.regime];
+    sim.oi = p[Math.floor(Math.random()*p.length)];
+  }
+
+  // Funding (very slow OU)
+  sim.fund += 0.008*({bull:.00065,bear:-.00020,ranging:.00010}[sim.regime] - sim.fund)*dt
+            + 0.000035*randn()*sq;
+  sim.fund = clamp(sim.fund, -.0015, .002);
+
+  const fp = clamp(50 + (sim.fund-.00025)/.0004*40, 0, 100);
+  if (fp >= 90) { sim.fSig='extreme_positive'; sim.fExt=true; sim.fCons++; }
+  else if (fp<=10){ sim.fSig='extreme_negative';sim.fExt=true; sim.fCons++; }
+  else { sim.fCons=0; sim.fExt=false; sim.fSig=fp>=72?'elevated':fp<=28?'depressed':'neutral'; }
+  sim.fPer = sim.fCons >= 3;
+
+  // Price change
+  sim.price += sim.ofiZ*.0003*dt + .0008*randn()*sq;
+  sim.price *= Math.pow(0.988, dt);
+  sim.price  = clamp(sim.price, -.05, .05);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIGNAL SCORING  (inline WaveSignal + PhaseSignal logic)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function computeWave() {
+  let L=0, S=0;
+
+  // OFI (40 pts max, threshold 1.5σ)
+  const z = sim.ofiZ;
+  if (Math.abs(z) >= 1.5) {
+    const p = Math.min(40, Math.abs(z)/3*40);
+    z>0 ? L+=p : S+=p;
+  }
+
+  // CVD alignment (25 pts × 0.6)
+  const cvdUp = sim.cvd > 0, prUp = sim.price > 0;
+  if (sim.price !== 0 && cvdUp === prUp) {
+    const p = 15;
+    prUp ? L+=p : S+=p;
+  }
+
+  // Depth ratio (20 pts max)
+  const d = sim.depth;
+  if (d > 1.5) { L += Math.min(20, d/3*20); }
+  else if (d < 0.67) { S += Math.min(20, (1/d)/3*20); }
+
+  // Volatility compressed (15 pts)
+  if (sim.vol === 'compressed') { L>=S ? L+=15 : S+=15; }
+
+  const max = Math.max(L, S);
+  const dir = L>S?'long':S>L?'short':'neutral';
+  const ok  = max >= 55;
+  return { score: Math.round(max), direction: ok?dir:'neutral', triggered: ok, targetRR: ok?1.5:null };
+}
+
+function computePhase() {
+  const cvdUp = sim.cvd>0, prUp = sim.price>0;
+  const fSig = sim.fSig, fPer = sim.fPer, fExt = sim.fExt;
+
+  let tL=0, tS=0, rL=0, rS=0;
+
+  // Trend long
+  if (sim.oi==='long_build') tL+=40; else if (sim.oi==='short_cover') tL+=15;
+  if (cvdUp&&prUp) tL+=25;
+  if (fSig==='extreme_positive'&&fPer) tL-=30;
+  else if (['neutral','depressed','extreme_negative'].includes(fSig)) tL+=15;
+
+  // Trend short
+  if (sim.oi==='short_build') tS+=40; else if (sim.oi==='long_exit') tS+=15;
+  if (!cvdUp&&!prUp) tS+=25;
+  if (fSig==='extreme_negative'&&fPer) tS-=30;
+  else if (['neutral','elevated','extreme_positive'].includes(fSig)) tS+=15;
+
+  // Reversal long (short squeeze)
+  if (fPer&&fSig==='extreme_negative') rL+=45; else if (fExt&&fSig==='extreme_negative') rL+=20;
+  if (sim.oi==='short_cover') rL+=25;
+
+  // Reversal short (long squeeze)
+  if (fPer&&fSig==='extreme_positive') rS+=45; else if (fExt&&fSig==='extreme_positive') rS+=20;
+  if (sim.oi==='long_exit') rS+=25;
+
+  // Session boost
+  const h=new Date().getUTCHours(), dow=new Date().getUTCDay();
+  const sb = (dow===1&&h<8)?10:(h>=13&&h<17)?5:0;
+
+  const sc = {tL:Math.max(0,tL),tS:Math.max(0,tS),rL:Math.max(0,rL),rS:Math.max(0,rS)};
+  const [bk,bs] = Object.entries(sc).reduce((a,b)=>b[1]>a[1]?b:a);
+  const conf = Math.min(100, bs+sb);
+  const ok   = bs >= 40;
+  const phMap = {tL:'trend_long',tS:'trend_short',rL:'reversal_long',rS:'reversal_short'};
+  const ph    = ok ? phMap[bk] : 'neutral';
+  const dir   = ph==='neutral'?'neutral':ph.includes('long')?'long':'short';
+  const rev   = ph==='reversal_long'||ph==='reversal_short';
+
+  return {
+    score: Math.round(conf), direction: dir, triggered: ok,
+    type: ph, isReversal: rev,
+    targetRR: rev?3.0:ok?1.5:null,
+    squeezeWarn: sim.fCons>=10
+      ? `⚠ Funding extrem seit ${sim.fCons} Perioden – Squeeze-Risiko!` : null,
+  };
+}
+
+function lbl(score, active) {
+  if (!active||score<55) return ['WARTEN','w'];
+  if (score>=83) return ['GOLDGRUBE','g'];
+  if (score>=68) return ['STARK','s'];
+  return ['AKTIV','a'];
+}
+
+function getSession() {
+  const h=new Date().getUTCHours(), dow=new Date().getUTCDay();
+  if (h>=13&&h<17) return {key:'eu_us_overlap',score:85};
+  if (h>=7&&h<13)  return {key:'europe',score:65};
+  if (h>=17&&h<22) return {key:'us',score:70};
+  if (dow===1&&h<8) return {key:'asia_monday',score:75};
+  if (h>=0&&h<7)   return {key:'asia',score:55};
+  return {key:'dead_zone',score:35};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DOM RENDERING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const DIR = {long:'LONG',short:'SHORT',neutral:'NEUTRAL'};
+
+function sigColor(dir,score) {
+  if (dir==='long')  return score>=83?'#ffd700':'#00cc88';
+  if (dir==='short') return '#ff2244';
   return '#445599';
 }
-
-function barBg(dir, score) {
-  if (score >= 83 && dir !== 'neutral') return 'linear-gradient(90deg,#996600,#ffd700)';
-  if (dir === 'long')  return 'linear-gradient(90deg,#005533,#00cc88)';
-  if (dir === 'short') return 'linear-gradient(90deg,#770011,#ff2244)';
+function barBg(dir,score) {
+  if (score>=83&&dir!=='neutral') return 'linear-gradient(90deg,#996600,#ffd700)';
+  if (dir==='long')  return 'linear-gradient(90deg,#005533,#00cc88)';
+  if (dir==='short') return 'linear-gradient(90deg,#770011,#ff2244)';
   return 'linear-gradient(90deg,#181833,#445599)';
 }
 
-function lblCls(l) {
-  return { GOLDGRUBE:'goldgrube', STARK:'stark', AKTIV:'aktiv', WARTEN:'warten' }[l] || 'warten';
+function renderCard(pfx, wave_or_phase, rec) {
+  const {score,direction:dir,triggered,targetRR} = wave_or_phase;
+  const [label,lcls] = lbl(score, triggered);
+  const isGold = label==='GOLDGRUBE';
+  const color  = sigColor(dir,score);
+
+  document.getElementById(pfx+'Card').className =
+    'card'+(isGold?' c-gold':triggered?' c-'+dir:'');
+
+  const de = document.getElementById(pfx+'Dir');
+  de.textContent = DIR[dir]||'––'; de.className='dir '+dir;
+
+  const re = document.getElementById(pfx+'RR');
+  if (targetRR&&triggered) { re.textContent='R:R '+targetRR+':1'; re.classList.add('show'); }
+  else re.classList.remove('show');
+
+  const be = document.getElementById(pfx+'Bar');
+  be.style.width = score+'%'; be.style.background = barBg(dir,score);
+
+  const ve = document.getElementById(pfx+'Val');
+  ve.textContent=score; ve.style.color=color;
+
+  const le = document.getElementById(pfx+'Lbl');
+  le.textContent=label; le.className='slbl '+lcls;
+
+  document.getElementById(pfx+'Rec').textContent = rec||'';
 }
 
-// ── Card updater ────────────────────────────────────────────────────────────
-function updateCard(pfx, d) {
-  const dir   = d.direction || 'neutral';
-  const score = d.score ?? 0;
-  const lbl   = d.label   || 'WARTEN';
-  const active = lbl !== 'WARTEN';
-  const isGold = lbl === 'GOLDGRUBE';
-  const color  = signalColor(dir, score);
+const OI_LBL  = {long_build:'LONG ▲',short_build:'SHORT ▲',short_cover:'DECKG',long_exit:'EXIT',neutral:'NEUTRAL'};
+const FND_LBL = {extreme_positive:'EXTREM +',extreme_negative:'EXTREM −',elevated:'ERHÖHT',depressed:'NIEDRIG',neutral:'NORMAL'};
+const VOL_LBL = {compressed:'TIEF ⚡',normal:'NORMAL',expanded:'HOCH'};
+const SES_LBL = {eu_us_overlap:'EU/US 🔥',europe:'EUR',us:'US',asia:'ASIA',asia_monday:'ASIA MON',dead_zone:'RUHIG'};
 
-  document.getElementById(pfx + 'Card').className =
-    'card' + (isGold ? ' c-gold' : active ? ' c-' + dir : '');
+function renderChips(sess) {
+  const z=sim.ofiZ;
+  const oE=document.getElementById('iOfi');
+  oE.textContent=(z>=0?'+':'')+z.toFixed(1);
+  oE.className='cv '+(z>1.5?'l':z<-1.5?'s':'');
 
-  const dirEl = document.getElementById(pfx + 'Dir');
-  dirEl.textContent = DIR_TEXT[dir] || '––';
-  dirEl.className = 'dir ' + dir;
+  const cE=document.getElementById('iCvd');
+  cE.textContent=sim.cvd>0?'▲ KAUF':'▼ VERK';
+  cE.className='cv '+(sim.cvd>0?'l':'s');
 
-  const rrEl = document.getElementById(pfx + 'RR');
-  if (d.targetRR && active) {
-    rrEl.textContent = 'R:R ' + d.targetRR + ':1';
-    rrEl.classList.add('show');
-  } else {
-    rrEl.classList.remove('show');
-  }
+  const vE=document.getElementById('iVol');
+  vE.textContent=VOL_LBL[sim.vol]||sim.vol;
+  vE.className='cv '+(sim.vol==='compressed'?'g':'');
 
-  const bar = document.getElementById(pfx + 'Bar');
-  bar.style.width      = score + '%';
-  bar.style.background = barBg(dir, score);
+  const oiE=document.getElementById('iOi');
+  oiE.textContent=OI_LBL[sim.oi]||sim.oi;
+  oiE.className='cv '+(['long_build','short_cover'].includes(sim.oi)?'l':['short_build','long_exit'].includes(sim.oi)?'s':'');
 
-  const val = document.getElementById(pfx + 'Val');
-  val.textContent  = score;
-  val.style.color  = color;
+  const fE=document.getElementById('iFund');
+  fE.textContent=FND_LBL[sim.fSig]||sim.fSig;
+  fE.className='cv '+(sim.fSig.includes('extreme')?'o':'');
 
-  const lblEl = document.getElementById(pfx + 'Lbl');
-  lblEl.textContent = lbl;
-  lblEl.className   = 'lbl ' + lblCls(lbl);
-
-  document.getElementById(pfx + 'Rec').textContent = d.recommendation || '';
+  const sE=document.getElementById('iSess');
+  sE.textContent=SES_LBL[sess.key]||sess.key;
+  sE.className='cv '+(sess.score>=72?'l':'');
 }
 
-// ── Indicator chip updater ──────────────────────────────────────────────────
-const OI_MAP = {
-  long_build:'LONG ▲', short_build:'SHORT ▲',
-  short_cover:'DECKG', long_exit:'EXIT', neutral:'NEUTRAL',
-};
-const FUND_MAP = {
-  extreme_positive:'EXTREM +', extreme_negative:'EXTREM −',
-  elevated:'ERHÖHT', depressed:'NIEDRIG', neutral:'NORMAL',
-};
-const SESS_MAP = {
-  eu_us_overlap:'EU/US 🔥', europe:'EUR',
-  us:'US', asia:'ASIA', dead_zone:'RUHIG', late_us:'SPÄT-US',
-};
-const VOL_MAP = { compressed:'TIEF ⚡', normal:'NORMAL', expanded:'HOCH' };
-
-function updateInds(ind) {
-  const ofiEl = document.getElementById('iOfi');
-  const z = ind.ofiZ;
-  ofiEl.textContent = (z >= 0 ? '+' : '') + z.toFixed(1);
-  ofiEl.className = 'cv ' + (z > 1.5 ? 'long' : z < -1.5 ? 'short' : '');
-
-  const cvdEl = document.getElementById('iCvd');
-  const isBuy = ind.cvdTrend === '▲';
-  cvdEl.textContent = isBuy ? '▲ KAUF' : '▼ VERK';
-  cvdEl.className = 'cv ' + (isBuy ? 'long' : 'short');
-
-  const volEl = document.getElementById('iVol');
-  volEl.textContent = VOL_MAP[ind.volatility] || ind.volatility;
-  volEl.className = 'cv ' + (ind.volatility === 'compressed' ? 'gold' : '');
-
-  const oiEl = document.getElementById('iOi');
-  oiEl.textContent = OI_MAP[ind.oiRegime] || ind.oiRegime;
-  oiEl.className = 'cv ' +
-    (ind.oiRegime === 'long_build'  || ind.oiRegime === 'short_cover' ? 'long'  :
-     ind.oiRegime === 'short_build' || ind.oiRegime === 'long_exit'   ? 'short' : '');
-
-  const fundEl = document.getElementById('iFund');
-  fundEl.textContent = FUND_MAP[ind.fundingSignal] || ind.fundingSignal;
-  fundEl.className = 'cv ' + (ind.fundingSignal?.includes('extreme') ? 'orange' : '');
-
-  const sessEl = document.getElementById('iSess');
-  sessEl.textContent = SESS_MAP[ind.session] || ind.session;
-  sessEl.className = 'cv ' + (ind.activityScore >= 72 ? 'long' : '');
+function waveRec(w) {
+  if (!w.triggered) return 'Score '+w.score+'/100 – unter Schwelle. Warte auf stärkeres OFI-Signal.';
+  return (w.direction.toUpperCase()+'-Welle ('+w.score+'/100) – OFI+CVD+Tiefe aktiv. Maker-Entry, Stop am Mikro-Swing, TP am nächsten LVN/HVN. R:R ≥ 1.5:1.');
+}
+function phaseRec(p) {
+  if (!p.triggered) return 'Kein Phase-Signal (höchster Score: '+p.score+'/100). Warte auf OI-Bestätigung oder Funding-Extrem.';
+  if (p.isReversal) return 'REVERSAL '+p.direction.toUpperCase()+' ('+p.score+'/100) – Squeeze-Setup. Entry erst nach Bestätigung. R:R ≥ 3:1.';
+  return 'TREND '+p.direction.toUpperCase()+' ('+p.score+'/100) – OI und CVD bestätigen. Trailing Stop. R:R ≥ 1.5:1.';
 }
 
-// ── Fetch loop ──────────────────────────────────────────────────────────────
-let connected = false;
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN LOOP
+// ═══════════════════════════════════════════════════════════════════════════════
 
-async function fetchUpdate() {
-  try {
-    const r = await fetch(api('/api/dashboard/live'), {
-      signal: AbortSignal.timeout(4500),
-      cache:  'no-store',
-    });
-    if (!r.ok) throw new Error(r.status);
-    const d = await r.json();
+function refresh() {
+  simTick();
+  const wave  = computeWave();
+  const phase = computePhase();
+  const sess  = getSession();
 
-    if (!connected) {
-      connected = true;
-      document.getElementById('liveBadge').className = 'live';
-    }
+  renderCard('phase', phase, phaseRec(phase));
+  renderCard('wave',  wave,  waveRec(wave));
+  renderChips(sess);
 
-    updateCard('phase', d.phase);
-    updateCard('wave',  d.wave);
-    updateInds(d.indicators);
-
-    const regLabel = { bull:'🟢 BULL', bear:'🔴 BEAR', ranging:'⚪ RANGE' };
-    document.getElementById('sTxt').textContent =
-      'Aktualisiert · ' + (regLabel[d.meta?.regime] || '⬤');
-    document.getElementById('sTime').textContent =
-      new Date(d.timestamp).toLocaleTimeString('de-CH',
-        { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-
-  } catch {
-    connected = false;
-    document.getElementById('liveBadge').className = 'live off';
-    document.getElementById('sTxt').textContent = 'Keine Verbindung – ⚙ Backend-URL prüfen';
-  }
+  const REGIMES = {bull:'🟢 BULL',bear:'🔴 BEAR',ranging:'⚪ RANGE'};
+  document.getElementById('sTxt').textContent  = 'Simulation · '+REGIMES[sim.regime];
+  document.getElementById('sTime').textContent = new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
-fetchUpdate();
-setInterval(fetchUpdate, POLL_MS);
+// Clock
+setInterval(()=>{
+  document.getElementById('clk').textContent=
+    new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+document.getElementById('clk').textContent=
+  new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+refresh();
+setInterval(refresh, 5000);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PWA INSTALL  – Chrome triggers beforeinstallprompt automatically
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _prompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _prompt = e;
+  document.getElementById('instBar').classList.add('show');
+  document.getElementById('ibtn').classList.add('show');
+});
+
+document.getElementById('instOk').addEventListener('click', async () => {
+  if (!_prompt) return;
+  _prompt.prompt();
+  const { outcome } = await _prompt.userChoice;
+  document.getElementById('instBar').classList.remove('show');
+  _prompt = null;
+});
+
+document.getElementById('instNo').addEventListener('click', () => {
+  document.getElementById('instBar').classList.remove('show');
+});
+
+document.getElementById('ibtn').addEventListener('click', () => {
+  if (_prompt) { _prompt.prompt(); _prompt = null; }
+  document.getElementById('instBar').classList.toggle('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('instBar').classList.remove('show');
+  document.getElementById('ibtn').classList.remove('show');
+});
 </script>
 </body>
 </html>
