@@ -3,14 +3,14 @@ plugins {
 }
 
 android {
-    namespace "ch.steph.btcglasklar"
+    namespace "ch.steph.btclernapp"
     compileSdk 35
 
     defaultConfig {
-        applicationId "ch.steph.btcglasklar.v9"
+        applicationId "ch.steph.btclernapp"
         minSdk 26
         targetSdk 35
-        versionCode 9
-        versionName "9.0"
+        versionCode 10
+        versionName "10.0"
     }
 }
