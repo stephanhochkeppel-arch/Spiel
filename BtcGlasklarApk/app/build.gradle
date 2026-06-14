@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace "ch.steph.btclernapp"
+    namespace "ch.steph.btcglasklar"
     compileSdk 35
 
     defaultConfig {
