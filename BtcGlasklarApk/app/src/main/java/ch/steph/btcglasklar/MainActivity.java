@@ -7,6 +7,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
 public class MainActivity extends Activity {
     private WebView webView;
 
@@ -27,9 +30,24 @@ public class MainActivity extends Activity {
         settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
 
+        webView.clearCache(true);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setWebViewClient(new WebViewClient());
-        webView.loadUrl("file:///android_asset/index.html");
+
+        try {
+            InputStream input = getAssets().open("index.html");
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = input.read(buffer)) != -1) {
+                output.write(buffer, 0, length);
+            }
+            input.close();
+            String html = output.toString("UTF-8");
+            webView.loadDataWithBaseURL("https://btc-glasklar-v9.local/", html, "text/html", "UTF-8", null);
+        } catch (Exception e) {
+            webView.loadData("<h1>BTC Glasklar V9 Ladefehler</h1><p>Bitte APK neu bauen.</p>", "text/html", "UTF-8");
+        }
     }
 
     @Override
