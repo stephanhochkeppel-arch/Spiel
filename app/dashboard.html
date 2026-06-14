@@ -1,538 +1,587 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="BTC Signale">
-  <meta name="theme-color" content="#060608">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/btc-icon.svg">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="BTC Signale"/>
+  <meta name="theme-color" content="#060608"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="apple-touch-icon" href="./btc-icon.svg"/>
   <title>BTC Signale</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     :root{
-      --bg:#060608; --card:#0d0d1b; --bdr:rgba(255,255,255,.07);
-      --long:#00cc88; --short:#ff2244; --neu:#445599; --gold:#ffd700;
-      --txt:#e8eaff; --dim:#556688; --r:18px;
-      --pt:env(safe-area-inset-top,0px); --pb:env(safe-area-inset-bottom,0px);
+      --bg:#060608;--card:#0d0d1b;--bdr:rgba(255,255,255,.07);
+      --long:#00cc88;--short:#ff2244;--neu:#445599;--gold:#ffd700;
+      --txt:#e8eaff;--dim:#556688;--r:18px;
+      --pt:env(safe-area-inset-top,0px);--pb:env(safe-area-inset-bottom,0px);
     }
-    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
-      font-family:-apple-system,system-ui,'Segoe UI',Helvetica,sans-serif}
-
+    html,body{height:100%;background:var(--bg);color:var(--txt);
+      font-family:-apple-system,system-ui,'Segoe UI',Helvetica,sans-serif;overflow:hidden}
     .app{display:flex;flex-direction:column;height:100dvh;
-      padding:calc(var(--pt)+10px) 12px calc(var(--pb)+8px);
-      gap:8px;max-width:520px;margin:0 auto}
+      padding:calc(var(--pt) + 10px) 12px calc(var(--pb) + 8px);
+      gap:8px;max-width:520px;margin:0 auto;overflow:hidden}
 
-    /* ─ Header ─ */
+    /* ── Header ── */
     .hdr{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .logo{font-size:17px;font-weight:800;letter-spacing:.04em;color:#fff}
-    .hdr-r{display:flex;align-items:center;gap:8px}
-    .live{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--long);
-      animation:blink 2.5s ease-in-out infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-    .clk{font-size:11px;font-variant-numeric:tabular-nums;color:var(--dim);letter-spacing:.04em}
-    .ibtn{background:none;border:none;font-size:17px;cursor:pointer;padding:2px 4px;
-      border-radius:6px;color:var(--dim);line-height:1;display:none;align-items:center}
-    .ibtn.show{display:flex}
+    .brand{font-size:16px;font-weight:900;letter-spacing:.06em;color:var(--gold)}
+    .price-box{text-align:right}
+    .price{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.01em}
+    .price-chg{font-size:12px;font-weight:700;margin-top:1px}
 
-    /* ─ Signal cards ─ */
-    .card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);
-      padding:13px 16px 11px;flex:1;min-height:0;
-      display:flex;flex-direction:column;gap:5px;
-      transition:border-color .6s,box-shadow .6s;overflow:hidden}
-    .card.c-long {border-color:rgba(0,204,136,.22)}
-    .card.c-short{border-color:rgba(255,34,68,.22)}
-    .card.c-gold {border-color:rgba(255,215,0,.42);animation:gp 2.4s ease-in-out infinite}
-    @keyframes gp{
-      0%,100%{box-shadow:0 0 18px rgba(255,215,0,.12),inset 0 1px 0 rgba(255,215,0,.04)}
-      50%    {box-shadow:0 0 46px rgba(255,215,0,.38),inset 0 1px 0 rgba(255,215,0,.10)}}
+    /* ── Status bar ── */
+    .status{display:flex;align-items:center;justify-content:space-between;
+      font-size:11px;color:var(--dim);flex-shrink:0}
+    .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+      background:#ff2244;margin-right:5px;flex-shrink:0;transition:background .4s}
+    .dot.live{background:var(--long);box-shadow:0 0 6px var(--long)}
+    .dot.warn{background:#ffaa00;box-shadow:0 0 6px #ffaa00}
 
-    .chdr{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
-    .cname{font-size:10px;font-weight:800;letter-spacing:.22em;color:var(--dim)}
-    .ctf  {font-size:9px;color:rgba(85,102,136,.55);letter-spacing:.05em}
+    /* ── Signal cards ── */
+    .cards{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;overflow-y:auto}
+    .card{background:var(--card);border:1.5px solid var(--bdr);border-radius:var(--r);
+      padding:14px 14px 12px;flex-shrink:0}
+    .card.gp{border-color:var(--gold);animation:gp 1.6s ease-in-out infinite alternate}
+    @keyframes gp{from{box-shadow:0 0 8px #ffd70040}to{box-shadow:0 0 28px #ffd700aa}}
 
-    .drow{display:flex;align-items:center;gap:10px;flex-shrink:0}
-    .dir{font-size:clamp(40px,13.5vw,62px);font-weight:900;
-      letter-spacing:.01em;line-height:1;transition:color .5s,text-shadow .5s}
-    .dir.long   {color:var(--long); text-shadow:0 0 30px rgba(0,204,136,.45)}
-    .dir.short  {color:var(--short);text-shadow:0 0 30px rgba(255,34,68,.45)}
-    .dir.neutral{color:var(--neu);  text-shadow:none}
+    .card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .card-type{font-size:10px;font-weight:800;letter-spacing:.15em;color:var(--dim);text-transform:uppercase}
+    .rr{font-size:10px;background:rgba(255,255,255,.07);border-radius:6px;padding:2px 8px;color:var(--txt)}
 
-    .rr{font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 8px;
-      border-radius:20px;white-space:nowrap;background:rgba(255,215,0,.1);
-      color:var(--gold);border:1px solid rgba(255,215,0,.25);
-      opacity:0;transition:opacity .4s;align-self:center}
-    .rr.show{opacity:1}
+    .score-row{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+    .score-n{font-size:54px;font-weight:900;line-height:1;min-width:70px}
+    .score-meta{display:flex;flex-direction:column;gap:2px}
+    .score-lbl{font-size:14px;font-weight:800;letter-spacing:.05em}
+    .score-dir{font-size:13px;font-weight:700}
+    .score-dir.long{color:var(--long);text-shadow:0 0 14px var(--long)}
+    .score-dir.short{color:var(--short);text-shadow:0 0 14px var(--short)}
+    .score-dir.neutral{color:var(--neu)}
 
-    .bar-bg{width:100%;height:9px;background:rgba(255,255,255,.05);
-      border-radius:5px;overflow:hidden;flex-shrink:0}
-    .bar-fill{height:100%;border-radius:5px;width:0%;
-      transition:width .9s cubic-bezier(.25,1,.5,1),background .55s}
+    .rec{font-size:11.5px;color:var(--dim);line-height:1.5;margin-top:6px}
+    .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+    .chip{font-size:10px;border-radius:7px;padding:2px 8px;
+      border:1px solid var(--bdr);background:rgba(255,255,255,.03);white-space:nowrap}
+    .chip.g{border-color:var(--long);color:var(--long)}
+    .chip.r{border-color:var(--short);color:var(--short)}
+    .chip.y{border-color:#ffaa00;color:#ffaa00}
 
-    .srow{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
-    .snum{display:flex;align-items:baseline;gap:2px}
-    .sval{font-size:clamp(25px,8.5vw,40px);font-weight:800;
-      font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;transition:color .5s}
-    .ssfx{font-size:12px;font-weight:500;color:var(--dim)}
-    .slbl{font-size:12px;font-weight:800;letter-spacing:.14em;transition:color .4s}
-    .slbl.g{color:var(--gold)}
-    .slbl.s{color:var(--long)}
-    .slbl.a{color:#55bb88}
-    .slbl.w{color:var(--dim)}
+    /* ── History ── */
+    .hist{flex-shrink:0}
+    .hist-hd{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--dim);
+      text-transform:uppercase;margin-bottom:6px}
+    .hist-list{display:flex;flex-direction:column;gap:4px}
+    .hist-row{display:flex;justify-content:space-between;align-items:center;
+      background:var(--card);border:1px solid var(--bdr);border-radius:10px;
+      padding:5px 10px;font-size:11px}
+    .hist-time{color:var(--dim)}
+    .hs{font-weight:700}
 
-    .rec{font-size:10px;color:rgba(85,102,136,.75);line-height:1.4;
-      overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
-      -webkit-box-orient:vertical;flex:1;min-height:0}
+    /* ── Install banner ── */
+    .install{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);
+      border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;
+      align-items:center;flex-shrink:0}
+    .install button{background:var(--gold);color:#000;border:none;border-radius:8px;
+      padding:5px 14px;font-weight:800;font-size:12px;cursor:pointer}
 
-    /* ─ Chips ─ */
-    .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;flex-shrink:0}
-    .chip{background:var(--card);border:1px solid var(--bdr);border-radius:11px;
-      padding:6px 10px;display:flex;flex-direction:column;gap:2px}
-    .ck{font-size:8px;font-weight:700;letter-spacing:.12em;color:var(--dim)}
-    .cv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
-      color:var(--txt);transition:color .35s}
-    .cv.l{color:var(--long)} .cv.s{color:var(--short)}
-    .cv.g{color:var(--gold)} .cv.o{color:#ff8833}
-
-    /* ─ Status / footer ─ */
-    .sbar{display:flex;justify-content:space-between;font-size:9px;
-      color:rgba(85,102,136,.45);flex-shrink:0;padding:0 2px}
-    .foot{font-size:8px;color:rgba(85,102,136,.3);text-align:center;
-      letter-spacing:.04em;flex-shrink:0}
-    .foot a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(85,102,136,.2)}
-
-    /* ─ Install banner ─ */
-    .inst-bar{display:none;align-items:center;justify-content:space-between;
-      background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);
-      border-radius:12px;padding:10px 14px;flex-shrink:0;gap:8px}
-    .inst-bar.show{display:flex}
-    .inst-txt{font-size:11px;color:var(--gold);font-weight:600}
-    .inst-btn{background:var(--gold);color:#000;border:none;border-radius:8px;
-      padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
-    .inst-x{background:none;border:none;color:var(--dim);font-size:16px;
-      cursor:pointer;padding:0 2px;line-height:1}
+    /* ── Loading pulse ── */
+    .pulse{animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
   </style>
 </head>
 <body>
 <div class="app">
 
-  <header class="hdr">
-    <span class="logo">₿ BTC SIGNALE</span>
-    <div class="hdr-r">
-      <span class="live" id="live">⬤ LIVE</span>
-      <span class="clk" id="clk">--:--:--</span>
-      <button class="ibtn" id="ibtn" title="Installieren">📲</button>
-    </div>
-  </header>
-
-  <!-- Install banner (appears when Chrome detects installable PWA) -->
-  <div class="inst-bar" id="instBar">
-    <span class="inst-txt">📲 App zum Startbildschirm hinzufügen</span>
-    <button class="inst-btn" id="instOk">Installieren</button>
-    <button class="inst-x" id="instNo">✕</button>
+  <div id="installBanner" class="install" style="display:none">
+    <span style="font-size:12px;font-weight:700">📲 Als App speichern</span>
+    <button id="installBtn">Installieren</button>
   </div>
 
-  <!-- PHASE -->
-  <div class="card" id="phaseCard">
-    <div class="chdr"><span class="cname">PHASE</span><span class="ctf">30 Min – 6 Std</span></div>
-    <div class="drow">
-      <div class="dir neutral" id="phaseDir">––</div>
-      <div class="rr" id="phaseRR"></div>
+  <div class="hdr">
+    <span class="brand">₿ SIGNALE</span>
+    <div class="price-box">
+      <div class="price" id="priceEl">–</div>
+      <div class="price-chg" id="priceChgEl" style="color:var(--dim)"></div>
     </div>
-    <div class="bar-bg"><div class="bar-fill" id="phaseBar"></div></div>
-    <div class="srow">
-      <div class="snum"><span class="sval" id="phaseVal">––</span><span class="ssfx">/100</span></div>
-      <span class="slbl w" id="phaseLbl">WARTEN</span>
-    </div>
-    <div class="rec" id="phaseRec"></div>
   </div>
 
-  <!-- WELLE -->
-  <div class="card" id="waveCard">
-    <div class="chdr"><span class="cname">WELLE</span><span class="ctf">15 – 45 Min</span></div>
-    <div class="drow">
-      <div class="dir neutral" id="waveDir">––</div>
-      <div class="rr" id="waveRR"></div>
+  <div class="status">
+    <span><span class="dot" id="dot"></span><span id="statusTxt">Verbinde mit Binance…</span></span>
+    <span id="clockEl"></span>
+  </div>
+
+  <div class="cards">
+
+    <!-- PHASE -->
+    <div class="card" id="phaseCard">
+      <div class="card-hd">
+        <span class="card-type">Phase</span>
+        <span class="rr" id="phaseRR"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-n pulse" id="phaseScore" style="color:var(--neu)">–</span>
+        <div class="score-meta">
+          <span class="score-lbl" id="phaseLbl">WARTEN</span>
+          <span class="score-dir neutral" id="phaseDir">◈ NEUTRAL</span>
+        </div>
+      </div>
+      <div class="rec" id="phaseRec">Warte auf Marktdaten…</div>
+      <div class="chips" id="phaseChips"></div>
     </div>
-    <div class="bar-bg"><div class="bar-fill" id="waveBar"></div></div>
-    <div class="srow">
-      <div class="snum"><span class="sval" id="waveVal">––</span><span class="ssfx">/100</span></div>
-      <span class="slbl w" id="waveLbl">WARTEN</span>
+
+    <!-- WELLE -->
+    <div class="card" id="waveCard">
+      <div class="card-hd">
+        <span class="card-type">Welle</span>
+        <span class="rr" id="waveRR"></span>
+      </div>
+      <div class="score-row">
+        <span class="score-n pulse" id="waveScore" style="color:var(--neu)">–</span>
+        <div class="score-meta">
+          <span class="score-lbl" id="waveLbl">WARTEN</span>
+          <span class="score-dir neutral" id="waveDir">◈ NEUTRAL</span>
+        </div>
+      </div>
+      <div class="rec" id="waveRec">Warte auf Orderbuch…</div>
+      <div class="chips" id="waveChips"></div>
     </div>
-    <div class="rec" id="waveRec"></div>
-  </div>
 
-  <!-- Sub-indicators -->
-  <div class="chips">
-    <div class="chip"><span class="ck">OFI z</span>  <span class="cv" id="iOfi">–</span></div>
-    <div class="chip"><span class="ck">CVD</span>    <span class="cv" id="iCvd">–</span></div>
-    <div class="chip"><span class="ck">VOL</span>    <span class="cv" id="iVol">–</span></div>
-    <div class="chip"><span class="ck">OI REGIME</span><span class="cv" id="iOi">–</span></div>
-    <div class="chip"><span class="ck">FUNDING</span><span class="cv" id="iFund">–</span></div>
-    <div class="chip"><span class="ck">SESSION</span><span class="cv" id="iSess">–</span></div>
-  </div>
+    <!-- HISTORY -->
+    <div class="hist">
+      <div class="hist-hd">Verlauf (Gedächtnis)</div>
+      <div class="hist-list" id="histList">
+        <div style="color:var(--dim);font-size:11px;padding:4px 2px">Noch keine Signale gespeichert</div>
+      </div>
+    </div>
 
-  <div class="sbar">
-    <span id="sTxt">Starte Simulation…</span>
-    <span id="sTime"></span>
-  </div>
-
-  <div class="foot">~52–58% Trefferquote · Kein Finanzrat · SIMULATION · <a href="/index.html">Chat ↗</a></div>
-</div>
+  </div><!-- /cards -->
+</div><!-- /app -->
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════════
-// SIMULATION ENGINE  (Ornstein-Uhlenbeck, no backend needed)
-// ═══════════════════════════════════════════════════════════════════════════════
+'use strict';
 
-function randn() {
-  const u = 1 - Math.random();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
-}
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-// Randomised startup state → dashboard shows live dynamics immediately
-const _sr = Math.random() < 0.40 ? 'bull' : Math.random() < 0.55 ? 'bear' : 'ranging';
-const _so = clamp((_sr==='bull'?0.9:_sr==='bear'?-0.9:0) + (Math.random()-.5)*1.4, -3.8, 3.8);
-
-const sim = {
-  t:      Date.now() - 60000,   // pretend 60 s already elapsed
-  regime: _sr,
-  rTTL:   60 + Math.random() * 350,
-  ofiZ:   _so,
-  cvd:    _so * 300 + (Math.random()-.5)*200,
-  depth:  clamp(Math.exp(_so*.35)*(0.85+Math.random()*.3), 0.25, 4.2),
-  vol:    Math.random()<.28?'compressed':'normal',
-  vTTL:   60 + Math.random()*350,
-  oi:     ({bull:'long_build',bear:'short_build',ranging:'neutral'})[_sr],
-  fund:   (_sr==='bull'?.00035:_sr==='bear'?-.00010:.0001)+(Math.random()-.5)*.0002,
-  fCons:  0, fSig:'neutral', fExt:false, fPer:false,
-  price:  _so*.002+(Math.random()-.5)*.002,
+// ─── Live state ─────────────────────────────────────────────────────────────
+const L = {
+  price: null, price24hChg: 0, priceSess: null,
+  cvd: 0, cvdSnaps: [],           // [{ts,cvd,price}] every 30s
+  bidTotal: null, askTotal: null,  // current depth
+  ofiWindow: [], ofiZ: 0,          // rolling OFI z-score
+  fundRate: 0, fundHist: [], fundConsec: 0, fundSig: 'neutral', fundExt: false, fundPer: false,
+  oiHist: [], oiRegime: 'neutral',
+  volatility: 'normal', atrWindow: [],
+  connected: false, dataReady: false,
 };
 
-const BIAS = { bull:1.3, bear:-1.3, ranging:0 };
+// ─── WebSocket ───────────────────────────────────────────────────────────────
+let ws, wsTimer, wsBacks = 0;
 
-function simTick() {
-  const now = Date.now();
-  const dt  = clamp((now - sim.t)/1000, 0, 30);
-  sim.t = now;
-  if (dt < 0.001) return;
-
-  // Regime (Markov)
-  sim.rTTL -= dt;
-  if (sim.rTTL <= 0) {
-    const r = Math.random();
-    sim.regime = ({
-      ranging: r<.38?'bull':r<.68?'bear':'ranging',
-      bull:    r<.52?'ranging':r<.72?'bear':'bull',
-      bear:    r<.52?'ranging':r<.72?'bull':'bear',
-    })[sim.regime];
-    sim.rTTL = 150 + Math.random()*550;
-  }
-
-  const b = BIAS[sim.regime], sq = Math.sqrt(dt);
-
-  // OFI z-score OU
-  sim.ofiZ += 0.15*(b - sim.ofiZ)*dt + 0.45*randn()*sq;
-  sim.ofiZ  = clamp(sim.ofiZ, -3.8, 3.8);
-
-  // CVD (integrates OFI)
-  sim.cvd += sim.ofiZ*100*dt + 50*randn()*sq;
-  sim.cvd *= Math.pow(0.982, dt);
-
-  // Depth ratio (bid/ask, correlated with OFI)
-  sim.depth += 0.2*(Math.exp(sim.ofiZ*.35) - sim.depth)*dt + 0.05*randn()*sq;
-  sim.depth  = clamp(sim.depth, 0.25, 4.2);
-
-  // Volatility cycle
-  sim.vTTL -= dt;
-  if (sim.vTTL <= 0) {
-    sim.vol  = sim.vol==='compressed'?'expanded':sim.vol==='expanded'?'normal':(Math.random()<.32?'compressed':'normal');
-    sim.vTTL = 90 + Math.random()*480;
-  }
-
-  // OI regime (~4% chance / s)
-  if (Math.random() < clamp(0.04*dt, 0, 0.25)) {
-    const p = {
-      bull:    ['long_build','long_build','long_build','short_cover'],
-      bear:    ['short_build','short_build','short_build','long_exit'],
-      ranging: ['neutral','long_build','short_build','neutral','long_exit'],
-    }[sim.regime];
-    sim.oi = p[Math.floor(Math.random()*p.length)];
-  }
-
-  // Funding (very slow OU)
-  sim.fund += 0.008*({bull:.00065,bear:-.00020,ranging:.00010}[sim.regime] - sim.fund)*dt
-            + 0.000035*randn()*sq;
-  sim.fund = clamp(sim.fund, -.0015, .002);
-
-  const fp = clamp(50 + (sim.fund-.00025)/.0004*40, 0, 100);
-  if (fp >= 90) { sim.fSig='extreme_positive'; sim.fExt=true; sim.fCons++; }
-  else if (fp<=10){ sim.fSig='extreme_negative';sim.fExt=true; sim.fCons++; }
-  else { sim.fCons=0; sim.fExt=false; sim.fSig=fp>=72?'elevated':fp<=28?'depressed':'neutral'; }
-  sim.fPer = sim.fCons >= 3;
-
-  // Price change
-  sim.price += sim.ofiZ*.0003*dt + .0008*randn()*sq;
-  sim.price *= Math.pow(0.988, dt);
-  sim.price  = clamp(sim.price, -.05, .05);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SIGNAL SCORING  (inline WaveSignal + PhaseSignal logic)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function computeWave() {
-  let L=0, S=0;
-
-  // OFI (40 pts max, threshold 1.5σ)
-  const z = sim.ofiZ;
-  if (Math.abs(z) >= 1.5) {
-    const p = Math.min(40, Math.abs(z)/3*40);
-    z>0 ? L+=p : S+=p;
-  }
-
-  // CVD alignment (25 pts × 0.6)
-  const cvdUp = sim.cvd > 0, prUp = sim.price > 0;
-  if (sim.price !== 0 && cvdUp === prUp) {
-    const p = 15;
-    prUp ? L+=p : S+=p;
-  }
-
-  // Depth ratio (20 pts max)
-  const d = sim.depth;
-  if (d > 1.5) { L += Math.min(20, d/3*20); }
-  else if (d < 0.67) { S += Math.min(20, (1/d)/3*20); }
-
-  // Volatility compressed (15 pts)
-  if (sim.vol === 'compressed') { L>=S ? L+=15 : S+=15; }
-
-  const max = Math.max(L, S);
-  const dir = L>S?'long':S>L?'short':'neutral';
-  const ok  = max >= 55;
-  return { score: Math.round(max), direction: ok?dir:'neutral', triggered: ok, targetRR: ok?1.5:null };
-}
-
-function computePhase() {
-  const cvdUp = sim.cvd>0, prUp = sim.price>0;
-  const fSig = sim.fSig, fPer = sim.fPer, fExt = sim.fExt;
-
-  let tL=0, tS=0, rL=0, rS=0;
-
-  // Trend long
-  if (sim.oi==='long_build') tL+=40; else if (sim.oi==='short_cover') tL+=15;
-  if (cvdUp&&prUp) tL+=25;
-  if (fSig==='extreme_positive'&&fPer) tL-=30;
-  else if (['neutral','depressed','extreme_negative'].includes(fSig)) tL+=15;
-
-  // Trend short
-  if (sim.oi==='short_build') tS+=40; else if (sim.oi==='long_exit') tS+=15;
-  if (!cvdUp&&!prUp) tS+=25;
-  if (fSig==='extreme_negative'&&fPer) tS-=30;
-  else if (['neutral','elevated','extreme_positive'].includes(fSig)) tS+=15;
-
-  // Reversal long (short squeeze)
-  if (fPer&&fSig==='extreme_negative') rL+=45; else if (fExt&&fSig==='extreme_negative') rL+=20;
-  if (sim.oi==='short_cover') rL+=25;
-
-  // Reversal short (long squeeze)
-  if (fPer&&fSig==='extreme_positive') rS+=45; else if (fExt&&fSig==='extreme_positive') rS+=20;
-  if (sim.oi==='long_exit') rS+=25;
-
-  // Session boost
-  const h=new Date().getUTCHours(), dow=new Date().getUTCDay();
-  const sb = (dow===1&&h<8)?10:(h>=13&&h<17)?5:0;
-
-  const sc = {tL:Math.max(0,tL),tS:Math.max(0,tS),rL:Math.max(0,rL),rS:Math.max(0,rS)};
-  const [bk,bs] = Object.entries(sc).reduce((a,b)=>b[1]>a[1]?b:a);
-  const conf = Math.min(100, bs+sb);
-  const ok   = bs >= 40;
-  const phMap = {tL:'trend_long',tS:'trend_short',rL:'reversal_long',rS:'reversal_short'};
-  const ph    = ok ? phMap[bk] : 'neutral';
-  const dir   = ph==='neutral'?'neutral':ph.includes('long')?'long':'short';
-  const rev   = ph==='reversal_long'||ph==='reversal_short';
-
-  return {
-    score: Math.round(conf), direction: dir, triggered: ok,
-    type: ph, isReversal: rev,
-    targetRR: rev?3.0:ok?1.5:null,
-    squeezeWarn: sim.fCons>=10
-      ? `⚠ Funding extrem seit ${sim.fCons} Perioden – Squeeze-Risiko!` : null,
+function connect() {
+  const streams = [
+    'btcusdt@aggTrade',
+    'btcusdt@depth5@500ms',
+    'btcusdt@markPrice@1s',
+    'btcusdt@kline_1m',
+  ].join('/');
+  ws = new WebSocket('wss://fstream.binance.com/stream?streams=' + streams);
+  ws.onopen  = () => { L.connected = true; wsBacks = 0; setStatus('live', 'Live · Binance Futures'); };
+  ws.onclose = ws.onerror = () => {
+    L.connected = false;
+    const wait = Math.min(30, 3 * ++wsBacks);
+    setStatus('', `Reconnect in ${wait}s…`);
+    clearTimeout(wsTimer);
+    wsTimer = setTimeout(connect, wait * 1000);
+  };
+  ws.onmessage = ({ data }) => {
+    const msg = JSON.parse(data);
+    const s = msg.stream, d = msg.data;
+    if (s.endsWith('aggTrade'))       onTrade(d);
+    else if (s.endsWith('500ms'))     onDepth(d);
+    else if (s.endsWith('1s'))        onMark(d);
+    else if (s.endsWith('kline_1m')) onKline(d);
   };
 }
 
-function lbl(score, active) {
-  if (!active||score<55) return ['WARTEN','w'];
-  if (score>=83) return ['GOLDGRUBE','g'];
-  if (score>=68) return ['STARK','s'];
-  return ['AKTIV','a'];
+function onTrade(d) {
+  // m=true → market maker on buy side → sell aggressor → CVD down
+  L.cvd += d.m ? -parseFloat(d.q) : +parseFloat(d.q);
+  L.price = parseFloat(d.p);
+  if (L.priceSess === null) L.priceSess = L.price;
+  L.dataReady = true;
+}
+
+function onDepth(d) {
+  const bid = d.b.slice(0,5).reduce((s,[,q])=>s+parseFloat(q),0);
+  const ask = d.a.slice(0,5).reduce((s,[,q])=>s+parseFloat(q),0);
+  if (L.bidTotal !== null) {
+    const ofi = (bid - L.bidTotal) - (ask - L.askTotal);
+    L.ofiWindow.push(ofi);
+    if (L.ofiWindow.length > 120) L.ofiWindow.shift();
+    L.ofiZ = zscore(L.ofiWindow);
+  }
+  L.bidTotal = bid; L.askTotal = ask;
+}
+
+function onMark(d) {
+  L.fundRate = parseFloat(d.r);
+  L.fundHist.push(L.fundRate);
+  if (L.fundHist.length > 500) L.fundHist.shift();
+  if (L.price) L.price = parseFloat(d.p); // mark price ≈ spot
+  computeFunding();
+}
+
+function onKline(d) {
+  if (!d.k.x) return; // wait for closed bar
+  const h = parseFloat(d.k.h), lo = parseFloat(d.k.l), c = parseFloat(d.k.c);
+  const range = (h - lo) / c;
+  L.atrWindow.push(range);
+  if (L.atrWindow.length > 100) L.atrWindow.shift();
+  if (L.atrWindow.length >= 20) {
+    const sorted = [...L.atrWindow].sort((a,b)=>a-b);
+    const n = sorted.length;
+    L.volatility = range < sorted[Math.floor(n*.25)] ? 'compressed'
+                 : range > sorted[Math.floor(n*.75)] ? 'expanded' : 'normal';
+  }
+  if (L.priceSess === null) L.priceSess = parseFloat(d.k.o);
+}
+
+// ─── Periodic: OI + CVD snapshot ─────────────────────────────────────────────
+async function fetchOI() {
+  try {
+    const r = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT');
+    const j = await r.json();
+    const oi = parseFloat(j.openInterest);
+    L.oiHist.push({ ts: Date.now(), oi, price: L.price });
+    if (L.oiHist.length > 40) L.oiHist.shift();
+    if (L.oiHist.length >= 2) {
+      const [a, b] = [L.oiHist.at(-2), L.oiHist.at(-1)];
+      const dOI    = (b.oi    - a.oi)    / a.oi;
+      const dPrice = a.price && b.price ? (b.price - a.price) / a.price : 0;
+      if      (dOI >  0.0005 && dPrice >  0) L.oiRegime = 'long_build';
+      else if (dOI >  0.0005 && dPrice <= 0) L.oiRegime = 'short_build';
+      else if (dOI < -0.0005 && dPrice >  0) L.oiRegime = 'short_cover';
+      else if (dOI < -0.0005 && dPrice <= 0) L.oiRegime = 'long_exit';
+      else                                    L.oiRegime = 'neutral';
+    }
+  } catch(_) {}
+}
+
+async function fetch24h() {
+  try {
+    const r = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=BTCUSDT');
+    const j = await r.json();
+    L.price = parseFloat(j.lastPrice);
+    L.price24hChg = parseFloat(j.priceChangePercent) / 100;
+    L.dataReady = true;
+  } catch(_) {}
+}
+
+function snapshotCVD() {
+  if (L.price) {
+    L.cvdSnaps.push({ ts: Date.now(), cvd: L.cvd, price: L.price });
+    if (L.cvdSnaps.length > 50) L.cvdSnaps.shift();
+  }
+}
+
+// ─── Funding extreme ──────────────────────────────────────────────────────────
+function computeFunding() {
+  if (L.fundHist.length < 5) return;
+  const r = L.fundRate;
+  const sorted = [...L.fundHist].sort((a,b)=>a-b);
+  const pct = sorted.filter(v=>v<=r).length / sorted.length * 100;
+  let sig = 'neutral', ext = false;
+  if      (pct >= 90) { sig = 'extreme_positive'; ext = true; L.fundConsec++; }
+  else if (pct <= 10) { sig = 'extreme_negative'; ext = true; L.fundConsec++; }
+  else { L.fundConsec = 0;
+    if      (pct >= 72) sig = 'elevated';
+    else if (pct <= 28) sig = 'depressed';
+  }
+  L.fundSig = sig; L.fundExt = ext; L.fundPer = L.fundConsec >= 3;
+}
+
+// ─── Signal computation ───────────────────────────────────────────────────────
+function computeWave() {
+  const ofi = L.ofiZ;
+  const depthRatio = L.askTotal > 0 ? L.bidTotal / L.askTotal : 1;
+  const cvdBull = L.cvd >= 0;
+
+  // CVD divergence (from snapshots)
+  let cvdDiv = 'none';
+  if (L.cvdSnaps.length >= 4) {
+    const h = L.cvdSnaps.slice(-4);
+    const cvdUp    = h.at(-1).cvd   > h[0].cvd;
+    const priceUp  = h.at(-1).price > h[0].price;
+    if ( cvdUp && !priceUp) cvdDiv = 'bullish_divergence';
+    if (!cvdUp &&  priceUp) cvdDiv = 'bearish_divergence';
+  }
+
+  // OFI component (40 pts max)
+  const absOfi = Math.abs(ofi);
+  const ofiScore  = absOfi >= 1.5 ? Math.min(40, 20 + (absOfi - 1.5) * 15) : absOfi >= 1 ? 10 : 0;
+  const ofiLong   = ofi > 0;
+
+  // CVD component (25 pts max)
+  const cvdScore = cvdDiv === 'bullish_divergence' ? 25
+                 : cvdDiv === 'bearish_divergence' ? 25
+                 : cvdBull ? 18 : 15;
+  const cvdLong  = cvdDiv === 'bullish_divergence' ? true
+                 : cvdDiv === 'bearish_divergence' ? false
+                 : cvdBull;
+
+  // Depth component (20 pts max)
+  const depthScore = depthRatio > 1.3 ? 20 : depthRatio > 1.1 ? 14 : depthRatio < 0.8 ? 14 : 6;
+  const depthLong  = depthRatio > 1;
+
+  // Volatility bonus (15 pts max)
+  const volScore = L.volatility === 'compressed' ? 12 : L.volatility === 'normal' ? 7 : 4;
+
+  // Direction by majority vote
+  const lVotes = [ofiLong, cvdLong, depthLong].filter(Boolean).length;
+  const dir = lVotes >= 2 ? 'long' : 'short';
+
+  const directional = dir === 'long'
+    ? (ofiLong?ofiScore:0) + (cvdLong?cvdScore:0) + (depthLong?depthScore:0)
+    : (!ofiLong?ofiScore:0) + (!cvdLong?cvdScore:0) + (!depthLong?depthScore:0);
+  const score = Math.min(100, Math.round(directional + volScore));
+  const triggered = score >= 55;
+
+  const priceChange = L.priceSess && L.price ? (L.price - L.priceSess) / L.priceSess : 0;
+
+  return {
+    score, dir: triggered ? dir : 'neutral', triggered,
+    ofiZ: ofi.toFixed(2), depthRatio: depthRatio.toFixed(2),
+    cvdTrend: L.cvd >= 0 ? '▲' : '▼', cvdDiv,
+    priceChange,
+    rec: !triggered ? 'Kein Wellen-Signal — Orderbuch neutral.'
+       : dir === 'long' ? `Kaufdruck · OFI ${ofi.toFixed(1)}σ · Tiefe ${depthRatio.toFixed(2)}`
+       :                  `Verkaufsdruck · OFI ${ofi.toFixed(1)}σ · Tiefe ${depthRatio.toFixed(2)}`,
+  };
+}
+
+function computePhase(wave) {
+  let tL = 0, tS = 0, rL = 0, rS = 0;
+
+  // OI regime (30 pts)
+  if      (L.oiRegime === 'long_build')  tL += 30;
+  else if (L.oiRegime === 'short_build') tS += 30;
+  else if (L.oiRegime === 'short_cover') tL += 20;
+  else if (L.oiRegime === 'long_exit')   tS += 20;
+
+  // Funding extreme → reversal signal (25 pts)
+  if (L.fundExt) {
+    if (L.fundSig === 'extreme_positive') rS += L.fundPer ? 25 : 15;
+    if (L.fundSig === 'extreme_negative') rL += L.fundPer ? 25 : 15;
+  } else {
+    if (L.fundSig === 'elevated')  tL += 5;
+    if (L.fundSig === 'depressed') tS += 5;
+  }
+
+  // CVD confirmation (20 pts)
+  if (L.cvd > 0) { tL += 20; rS += 5; }
+  else           { tS += 20; rL += 5; }
+
+  // Wave alignment (15 pts)
+  if (wave.triggered) {
+    if (wave.dir === 'long')  { tL += 15; rL += 8; }
+    if (wave.dir === 'short') { tS += 15; rS += 8; }
+  }
+
+  // Seasonality (10 pts)
+  const sess = getSession();
+  const bonus = Math.round(sess.activityScore * 10);
+  tL += bonus; tS += bonus;
+
+  const best = Math.max(tL, tS, rL, rS);
+  let phase = 'neutral', dir = 'neutral', isRev = false, rr = null;
+
+  if (best >= 40) {
+    if      (tL >= best) { phase = 'trend_long';     dir = 'long';  rr = 1.5; }
+    else if (tS >= best) { phase = 'trend_short';    dir = 'short'; rr = 1.5; }
+    else if (rL >= best) { phase = 'reversal_long';  dir = 'long';  rr = 3;   isRev = true; }
+    else                 { phase = 'reversal_short'; dir = 'short'; rr = 3;   isRev = true; }
+  }
+
+  const score = Math.min(100, Math.round(best));
+  const squeezeWarn = L.volatility === 'compressed' && L.fundExt;
+
+  let rec = '';
+  if (phase === 'neutral') rec = 'Kein dominantes Phase-Signal.';
+  else if (!isRev) rec = `Trend ${dir === 'long' ? 'aufwärts' : 'abwärts'} · OI: ${L.oiRegime} · R:R ${rr}:1`;
+  else rec = `Umkehr ${dir === 'long' ? 'aufwärts' : 'abwärts'} · Funding-Extrem${L.fundPer ? ' (persistent)' : ''} · R:R ${rr}:1`;
+  if (squeezeWarn) rec += ' · ⚠ Squeeze';
+
+  return { score, dir, phase, isRev, rr, rec, sess, squeezeWarn };
 }
 
 function getSession() {
-  const h=new Date().getUTCHours(), dow=new Date().getUTCDay();
-  if (h>=13&&h<17) return {key:'eu_us_overlap',score:85};
-  if (h>=7&&h<13)  return {key:'europe',score:65};
-  if (h>=17&&h<22) return {key:'us',score:70};
-  if (dow===1&&h<8) return {key:'asia_monday',score:75};
-  if (h>=0&&h<7)   return {key:'asia',score:55};
-  return {key:'dead_zone',score:35};
+  const now = new Date();
+  const h = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const dow = now.getUTCDay();
+  let session = 'dead_zone', act = 0.2;
+  if (h >= 13 && h < 17) { session = 'eu_us_overlap'; act = 1.0; }
+  else if (h >= 7 && h < 13) { session = 'europe'; act = 0.7; }
+  else if (h >= 17 && h < 22) { session = 'us'; act = 0.75; }
+  else if (h >= 1 && h < 7)  { session = 'asia'; act = 0.55; }
+  if (dow === 1 && h >= 1 && h < 9) act = Math.max(act, 0.8);
+  return { session, activityScore: act };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DOM RENDERING
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const DIR = {long:'LONG',short:'SHORT',neutral:'NEUTRAL'};
-
-function sigColor(dir,score) {
-  if (dir==='long')  return score>=83?'#ffd700':'#00cc88';
-  if (dir==='short') return '#ff2244';
-  return '#445599';
-}
-function barBg(dir,score) {
-  if (score>=83&&dir!=='neutral') return 'linear-gradient(90deg,#996600,#ffd700)';
-  if (dir==='long')  return 'linear-gradient(90deg,#005533,#00cc88)';
-  if (dir==='short') return 'linear-gradient(90deg,#770011,#ff2244)';
-  return 'linear-gradient(90deg,#181833,#445599)';
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function zscore(arr) {
+  if (arr.length < 5) return 0;
+  const mean = arr.reduce((s,v)=>s+v,0)/arr.length;
+  const std  = Math.sqrt(arr.reduce((s,v)=>s+(v-mean)**2,0)/arr.length);
+  return std < 1e-12 ? 0 : Math.max(-3.8, Math.min(3.8, (arr.at(-1)-mean)/std));
 }
 
-function renderCard(pfx, wave_or_phase, rec) {
-  const {score,direction:dir,triggered,targetRR} = wave_or_phase;
-  const [label,lcls] = lbl(score, triggered);
-  const isGold = label==='GOLDGRUBE';
-  const color  = sigColor(dir,score);
-
-  document.getElementById(pfx+'Card').className =
-    'card'+(isGold?' c-gold':triggered?' c-'+dir:'');
-
-  const de = document.getElementById(pfx+'Dir');
-  de.textContent = DIR[dir]||'––'; de.className='dir '+dir;
-
-  const re = document.getElementById(pfx+'RR');
-  if (targetRR&&triggered) { re.textContent='R:R '+targetRR+':1'; re.classList.add('show'); }
-  else re.classList.remove('show');
-
-  const be = document.getElementById(pfx+'Bar');
-  be.style.width = score+'%'; be.style.background = barBg(dir,score);
-
-  const ve = document.getElementById(pfx+'Val');
-  ve.textContent=score; ve.style.color=color;
-
-  const le = document.getElementById(pfx+'Lbl');
-  le.textContent=label; le.className='slbl '+lcls;
-
-  document.getElementById(pfx+'Rec').textContent = rec||'';
+function scoreLbl(score, active) {
+  if (!active || score < 55) return ['WARTEN', ''];
+  if (score >= 83) return ['GOLDGRUBE', 'gp'];
+  if (score >= 68) return ['STARK', ''];
+  return ['AKTIV', ''];
 }
 
-const OI_LBL  = {long_build:'LONG ▲',short_build:'SHORT ▲',short_cover:'DECKG',long_exit:'EXIT',neutral:'NEUTRAL'};
-const FND_LBL = {extreme_positive:'EXTREM +',extreme_negative:'EXTREM −',elevated:'ERHÖHT',depressed:'NIEDRIG',neutral:'NORMAL'};
-const VOL_LBL = {compressed:'TIEF ⚡',normal:'NORMAL',expanded:'HOCH'};
-const SES_LBL = {eu_us_overlap:'EU/US 🔥',europe:'EUR',us:'US',asia:'ASIA',asia_monday:'ASIA MON',dead_zone:'RUHIG'};
+function fmtPrice(p) {
+  return p == null ? '–'
+    : '$' + p.toLocaleString('de-CH', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('de-CH', {hour:'2-digit', minute:'2-digit'});
+}
+function dirCls(d) { return d === 'long' ? 'long' : d === 'short' ? 'short' : 'neutral'; }
+function dirTxt(d) { return d === 'long' ? '▲ LONG' : d === 'short' ? '▼ SHORT' : '◈ NEUTRAL'; }
 
-function renderChips(sess) {
-  const z=sim.ofiZ;
-  const oE=document.getElementById('iOfi');
-  oE.textContent=(z>=0?'+':'')+z.toFixed(1);
-  oE.className='cv '+(z>1.5?'l':z<-1.5?'s':'');
-
-  const cE=document.getElementById('iCvd');
-  cE.textContent=sim.cvd>0?'▲ KAUF':'▼ VERK';
-  cE.className='cv '+(sim.cvd>0?'l':'s');
-
-  const vE=document.getElementById('iVol');
-  vE.textContent=VOL_LBL[sim.vol]||sim.vol;
-  vE.className='cv '+(sim.vol==='compressed'?'g':'');
-
-  const oiE=document.getElementById('iOi');
-  oiE.textContent=OI_LBL[sim.oi]||sim.oi;
-  oiE.className='cv '+(['long_build','short_cover'].includes(sim.oi)?'l':['short_build','long_exit'].includes(sim.oi)?'s':'');
-
-  const fE=document.getElementById('iFund');
-  fE.textContent=FND_LBL[sim.fSig]||sim.fSig;
-  fE.className='cv '+(sim.fSig.includes('extreme')?'o':'');
-
-  const sE=document.getElementById('iSess');
-  sE.textContent=SES_LBL[sess.key]||sess.key;
-  sE.className='cv '+(sess.score>=72?'l':'');
+// ─── Render ──────────────────────────────────────────────────────────────────
+function setStatus(type, text) {
+  const d = document.getElementById('dot');
+  d.className = 'dot' + (type === 'live' ? ' live' : type === 'warn' ? ' warn' : '');
+  document.getElementById('statusTxt').textContent = text;
 }
 
-function waveRec(w) {
-  if (!w.triggered) return 'Score '+w.score+'/100 – unter Schwelle. Warte auf stärkeres OFI-Signal.';
-  return (w.direction.toUpperCase()+'-Welle ('+w.score+'/100) – OFI+CVD+Tiefe aktiv. Maker-Entry, Stop am Mikro-Swing, TP am nächsten LVN/HVN. R:R ≥ 1.5:1.');
-}
-function phaseRec(p) {
-  if (!p.triggered) return 'Kein Phase-Signal (höchster Score: '+p.score+'/100). Warte auf OI-Bestätigung oder Funding-Extrem.';
-  if (p.isReversal) return 'REVERSAL '+p.direction.toUpperCase()+' ('+p.score+'/100) – Squeeze-Setup. Entry erst nach Bestätigung. R:R ≥ 3:1.';
-  return 'TREND '+p.direction.toUpperCase()+' ('+p.score+'/100) – OI und CVD bestätigen. Trailing Stop. R:R ≥ 1.5:1.';
+function renderCard(pfx, { score, dir, rr, rec }, lbl, gpClass) {
+  const card = document.getElementById(pfx + 'Card');
+  card.className = 'card' + (gpClass === 'gp' ? ' gp' : '');
+  const sn = document.getElementById(pfx + 'Score');
+  sn.textContent = score;
+  sn.className = 'score-n'; // remove pulse
+  sn.style.color = dir === 'long' ? 'var(--long)' : dir === 'short' ? 'var(--short)' : 'var(--neu)';
+  document.getElementById(pfx + 'Lbl').textContent = lbl;
+  const dEl = document.getElementById(pfx + 'Dir');
+  dEl.textContent = dirTxt(dir);
+  dEl.className = 'score-dir ' + dirCls(dir);
+  document.getElementById(pfx + 'Rec').textContent = rec;
+  const rrEl = document.getElementById(pfx + 'RR');
+  rrEl.textContent = rr ? `R:R ${rr}:1` : '';
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN LOOP
-// ═══════════════════════════════════════════════════════════════════════════════
+function chip(t, cls) { return `<span class="chip ${cls||''}">${t}</span>`; }
 
 function refresh() {
-  simTick();
+  // Clock
+  document.getElementById('clockEl').textContent =
+    new Date().toLocaleTimeString('de-CH', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // Price
+  document.getElementById('priceEl').textContent = fmtPrice(L.price);
+  const pchg = L.price24hChg;
+  const pEl = document.getElementById('priceChgEl');
+  pEl.textContent = pchg ? (pchg>=0?'+':'') + (pchg*100).toFixed(2)+'% 24h' : '';
+  pEl.style.color = pchg >= 0 ? 'var(--long)' : 'var(--short)';
+
+  if (!L.dataReady) return;
+
   const wave  = computeWave();
-  const phase = computePhase();
-  const sess  = getSession();
+  const phase = computePhase(wave);
 
-  renderCard('phase', phase, phaseRec(phase));
-  renderCard('wave',  wave,  waveRec(wave));
-  renderChips(sess);
+  const [wLbl, wGP] = scoreLbl(wave.score, wave.triggered);
+  const [pLbl, pGP] = scoreLbl(phase.score, phase.phase !== 'neutral');
 
-  const REGIMES = {bull:'🟢 BULL',bear:'🔴 BEAR',ranging:'⚪ RANGE'};
-  document.getElementById('sTxt').textContent  = 'Simulation · '+REGIMES[sim.regime];
-  document.getElementById('sTime').textContent = new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  renderCard('wave',  { score:wave.score,  dir:wave.dir,  rr:wave.triggered?1.5:null, rec:wave.rec  }, wLbl, wGP);
+  renderCard('phase', { score:phase.score, dir:phase.dir, rr:phase.rr, rec:phase.rec }, pLbl, pGP);
+
+  // Wave chips
+  document.getElementById('waveChips').innerHTML = [
+    chip(`OFI ${wave.ofiZ}σ`,    Math.abs(parseFloat(wave.ofiZ))>1.5?'g':''),
+    chip(`CVD ${wave.cvdTrend}`, L.cvd>0?'g':'r'),
+    chip(`Tiefe ${wave.depthRatio}`, parseFloat(wave.depthRatio)>1.2?'g':parseFloat(wave.depthRatio)<0.85?'r':''),
+    chip(`Vol ${L.volatility}`,   L.volatility==='compressed'?'y':''),
+    chip(`Funding ${(L.fundRate*100).toFixed(4)}%`, L.fundExt?(L.fundSig.includes('pos')?'r':'g'):''),
+  ].join('');
+
+  // Phase chips
+  document.getElementById('phaseChips').innerHTML = [
+    chip(`OI ${L.oiRegime}`, ['long_build','short_cover'].includes(L.oiRegime)?'g':['short_build','long_exit'].includes(L.oiRegime)?'r':''),
+    chip(L.fundSig, L.fundExt?(L.fundSig.includes('pos')?'r':'g'):''),
+    chip(phase.sess.session.replace(/_/g,' '), phase.sess.activityScore>=0.7?'g':''),
+    chip(`Wave ${wave.dir}`, wave.triggered?(wave.dir==='long'?'g':'r'):''),
+    phase.squeezeWarn ? chip('⚠ Squeeze', 'y') : '',
+  ].filter(Boolean).join('');
+
+  // Save to history
+  saveHist({ ts:Date.now(), wS:wave.score, wD:wave.dir, wL:wLbl, pS:phase.score, pD:phase.dir, pL:pLbl });
+  renderHist();
 }
 
-// Clock
-setInterval(()=>{
-  document.getElementById('clk').textContent=
-    new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-},1000);
-document.getElementById('clk').textContent=
-  new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+// ─── localStorage history ─────────────────────────────────────────────────────
+const HIST_KEY = 'btcSigHist_v2';
 
-refresh();
-setInterval(refresh, 5000);
+function loadHist() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch { return []; }
+}
+function saveHist(entry) {
+  try {
+    const arr = loadHist();
+    // Avoid duplicate saves within 4 minutes
+    if (arr.length && Date.now() - arr.at(-1).ts < 240_000) return;
+    arr.push(entry);
+    if (arr.length > 120) arr.splice(0, arr.length - 120);
+    localStorage.setItem(HIST_KEY, JSON.stringify(arr));
+  } catch(_) {}
+}
+function renderHist() {
+  const hist = loadHist().slice(-8).reverse();
+  const el = document.getElementById('histList');
+  if (!hist.length) return;
+  el.innerHTML = hist.map(h => `
+    <div class="hist-row">
+      <span class="hist-time">${fmtTime(h.ts)}</span>
+      <div style="display:flex;gap:8px">
+        <span class="hs" style="color:${h.pD==='long'?'var(--long)':h.pD==='short'?'var(--short)':'var(--neu)'}">P:${h.pS} ${h.pL}</span>
+        <span style="color:var(--dim)">·</span>
+        <span class="hs" style="color:${h.wD==='long'?'var(--long)':h.wD==='short'?'var(--short)':'var(--neu)'}">W:${h.wS} ${h.wL}</span>
+      </div>
+    </div>`).join('');
+}
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PWA INSTALL  – Chrome triggers beforeinstallprompt automatically
-// ═══════════════════════════════════════════════════════════════════════════════
-
-let _prompt = null;
-
+// ─── PWA install ──────────────────────────────────────────────────────────────
+let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
-  _prompt = e;
-  document.getElementById('instBar').classList.add('show');
-  document.getElementById('ibtn').classList.add('show');
+  deferredInstall = e;
+  document.getElementById('installBanner').style.display = 'flex';
 });
-
-document.getElementById('instOk').addEventListener('click', async () => {
-  if (!_prompt) return;
-  _prompt.prompt();
-  const { outcome } = await _prompt.userChoice;
-  document.getElementById('instBar').classList.remove('show');
-  _prompt = null;
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById('installBanner').style.display = 'none';
 });
-
-document.getElementById('instNo').addEventListener('click', () => {
-  document.getElementById('instBar').classList.remove('show');
-});
-
-document.getElementById('ibtn').addEventListener('click', () => {
-  if (_prompt) { _prompt.prompt(); _prompt = null; }
-  document.getElementById('instBar').classList.toggle('show');
-});
-
 window.addEventListener('appinstalled', () => {
-  document.getElementById('instBar').classList.remove('show');
-  document.getElementById('ibtn').classList.remove('show');
+  document.getElementById('installBanner').style.display = 'none';
 });
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+fetch24h();
+connect();
+fetchOI();
+snapshotCVD();
+setInterval(fetchOI, 30_000);
+setInterval(snapshotCVD, 30_000);
+setInterval(refresh, 5_000);
+renderHist(); // Show cached history immediately
+refresh();
 </script>
 </body>
 </html>
