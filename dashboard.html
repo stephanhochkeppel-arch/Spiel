@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#060608">
+  <title>BTC Signale</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    :root{
+      --bg:#060608;
+      --card:#0d0d1b;
+      --border:rgba(255,255,255,.07);
+      --long:#00cc88;
+      --short:#ff2244;
+      --neutral:#445599;
+      --gold:#ffd700;
+      --text:#e8eaff;
+      --muted:#556688;
+      --r:18px;
+      --pt:env(safe-area-inset-top,0px);
+      --pb:env(safe-area-inset-bottom,0px);
+    }
+    html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+      font-family:-apple-system,system-ui,'Segoe UI',Helvetica,sans-serif}
+
+    /* ── Layout shell ── */
+    .app{
+      display:flex;flex-direction:column;height:100dvh;
+      padding:calc(var(--pt) + 10px) 12px calc(var(--pb) + 8px);
+      gap:8px;max-width:520px;margin:0 auto
+    }
+
+    /* ── Header ── */
+    .hdr{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .hdr-logo{font-size:17px;font-weight:800;letter-spacing:.04em;color:#fff}
+    .hdr-r{display:flex;align-items:center;gap:10px}
+    .live{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--long);
+      animation:liveblink 2.5s ease-in-out infinite}
+    .live.off{color:var(--muted);animation:none}
+    @keyframes liveblink{0%,100%{opacity:1}50%{opacity:.25}}
+    .clk{font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted);letter-spacing:.04em}
+    .cfg-btn{background:none;border:none;color:var(--muted);font-size:17px;
+      cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1}
+
+    /* ── Signal cards ── */
+    .card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+      padding:13px 16px 11px;flex:1;min-height:0;
+      display:flex;flex-direction:column;gap:5px;
+      transition:border-color .6s,box-shadow .6s;overflow:hidden
+    }
+    .card.c-long {border-color:rgba(0,204,136,.22)}
+    .card.c-short{border-color:rgba(255,34,68,.22)}
+    .card.c-gold {
+      border-color:rgba(255,215,0,.42);
+      animation:goldpulse 2.4s ease-in-out infinite
+    }
+    @keyframes goldpulse{
+      0%,100%{box-shadow:0 0 18px rgba(255,215,0,.12),inset 0 1px 0 rgba(255,215,0,.04)}
+      50%    {box-shadow:0 0 46px rgba(255,215,0,.36),inset 0 1px 0 rgba(255,215,0,.10)}
+    }
+    .card-hdr{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
+    .card-name{font-size:10px;font-weight:800;letter-spacing:.22em;color:var(--muted)}
+    .card-tf  {font-size:9px;color:rgba(85,102,136,.55);letter-spacing:.05em}
+
+    /* Direction row */
+    .dir-row{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .dir{
+      font-size:clamp(40px,13.5vw,62px);font-weight:900;
+      letter-spacing:.01em;line-height:1;
+      transition:color .5s,text-shadow .5s
+    }
+    .dir.long   {color:var(--long); text-shadow:0 0 30px rgba(0,204,136,.45)}
+    .dir.short  {color:var(--short);text-shadow:0 0 30px rgba(255,34,68,.45)}
+    .dir.neutral{color:var(--neutral);text-shadow:none}
+
+    /* R:R badge */
+    .rr{
+      font-size:10px;font-weight:700;letter-spacing:.06em;
+      padding:3px 8px;border-radius:20px;white-space:nowrap;
+      background:rgba(255,215,0,.1);color:var(--gold);
+      border:1px solid rgba(255,215,0,.25);
+      opacity:0;transition:opacity .4s;align-self:center
+    }
+    .rr.show{opacity:1}
+
+    /* Score bar */
+    .bar-bg{
+      width:100%;height:9px;background:rgba(255,255,255,.05);
+      border-radius:5px;overflow:hidden;flex-shrink:0
+    }
+    .bar-fill{
+      height:100%;border-radius:5px;width:0%;
+      transition:width .9s cubic-bezier(.25,1,.5,1),background .55s
+    }
+
+    /* Score row */
+    .score-row{display:flex;justify-content:space-between;align-items:baseline;flex-shrink:0}
+    .score-wrap{display:flex;align-items:baseline;gap:2px}
+    .score-val{
+      font-size:clamp(25px,8.5vw,40px);font-weight:800;
+      font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;
+      transition:color .5s
+    }
+    .score-sfx{font-size:12px;font-weight:500;color:var(--muted)}
+    .lbl{
+      font-size:12px;font-weight:800;letter-spacing:.14em;transition:color .4s
+    }
+    .lbl.goldgrube{color:var(--gold)}
+    .lbl.stark    {color:var(--long)}
+    .lbl.aktiv    {color:#55bb88}
+    .lbl.warten   {color:var(--muted)}
+
+    /* Recommendation line */
+    .rec{
+      font-size:10px;color:rgba(85,102,136,.75);line-height:1.4;
+      overflow:hidden;display:-webkit-box;
+      -webkit-line-clamp:2;-webkit-box-orient:vertical;
+      flex:1;min-height:0
+    }
+
+    /* ── Sub-indicator grid ── */
+    .ind-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:5px;flex-shrink:0
+    }
+    .chip{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:11px;padding:6px 10px;
+      display:flex;flex-direction:column;gap:2px
+    }
+    .ck{font-size:8px;font-weight:700;letter-spacing:.12em;color:var(--muted)}
+    .cv{
+      font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
+      color:var(--text);transition:color .35s
+    }
+    .cv.long  {color:var(--long)}
+    .cv.short {color:var(--short)}
+    .cv.gold  {color:var(--gold)}
+    .cv.orange{color:#ff8833}
+
+    /* ── Status + footer ── */
+    .sbar{
+      display:flex;justify-content:space-between;
+      font-size:9px;color:rgba(85,102,136,.45);
+      flex-shrink:0;padding:0 2px
+    }
+    .foot{
+      font-size:8px;color:rgba(85,102,136,.3);
+      text-align:center;letter-spacing:.04em;flex-shrink:0
+    }
+    .foot a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(85,102,136,.2)}
+
+    /* ── Settings modal ── */
+    .modal-ov{
+      position:fixed;inset:0;background:rgba(0,0,0,.88);
+      display:none;align-items:center;justify-content:center;
+      z-index:100;padding:20px
+    }
+    .modal-ov.open{display:flex}
+    .modal{
+      background:#0f0f22;border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;padding:24px;width:100%;max-width:380px
+    }
+    .modal h2{font-size:15px;font-weight:700;margin-bottom:16px}
+    .modal label{font-size:10px;color:var(--muted);display:block;
+      margin-bottom:6px;letter-spacing:.05em}
+    .modal input{
+      width:100%;background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);border-radius:8px;
+      color:var(--text);font-size:14px;padding:10px 12px;outline:none;
+      font-family:inherit
+    }
+    .modal input:focus{border-color:var(--long)}
+    .modal-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5}
+    .modal-hint code{color:rgba(200,220,200,.7);font-size:10px}
+    .modal-btns{display:flex;gap:8px;margin-top:18px}
+    .mbtn{
+      flex:1;padding:10px;border:1px solid rgba(255,255,255,.1);
+      border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;
+      background:rgba(255,255,255,.05);color:var(--text);font-family:inherit
+    }
+    .mbtn.ok{background:var(--long);color:#000;border-color:transparent}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hdr">
+    <span class="hdr-logo">₿ BTC SIGNALE</span>
+    <div class="hdr-r">
+      <span class="live" id="liveBadge">⬤ LIVE</span>
+      <span class="clk" id="clk">--:--:--</span>
+      <button class="cfg-btn" id="cfgBtn" title="Einstellungen">⚙</button>
+    </div>
+  </header>
+
+  <!-- PHASE Signal -->
+  <div class="card" id="phaseCard">
+    <div class="card-hdr">
+      <span class="card-name">PHASE</span>
+      <span class="card-tf">30 Min – 6 Std</span>
+    </div>
+    <div class="dir-row">
+      <div class="dir neutral" id="phaseDir">––</div>
+      <div class="rr" id="phaseRR"></div>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="phaseBar"></div></div>
+    <div class="score-row">
+      <div class="score-wrap">
+        <span class="score-val" id="phaseVal">––</span>
+        <span class="score-sfx">/100</span>
+      </div>
+      <span class="lbl warten" id="phaseLbl">WARTEN</span>
+    </div>
+    <div class="rec" id="phaseRec"></div>
+  </div>
+
+  <!-- WELLE Signal -->
+  <div class="card" id="waveCard">
+    <div class="card-hdr">
+      <span class="card-name">WELLE</span>
+      <span class="card-tf">15 – 45 Min</span>
+    </div>
+    <div class="dir-row">
+      <div class="dir neutral" id="waveDir">––</div>
+      <div class="rr" id="waveRR"></div>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="waveBar"></div></div>
+    <div class="score-row">
+      <div class="score-wrap">
+        <span class="score-val" id="waveVal">––</span>
+        <span class="score-sfx">/100</span>
+      </div>
+      <span class="lbl warten" id="waveLbl">WARTEN</span>
+    </div>
+    <div class="rec" id="waveRec"></div>
+  </div>
+
+  <!-- Sub-indicator chips -->
+  <div class="ind-grid">
+    <div class="chip"><span class="ck">OFI z</span><span class="cv" id="iOfi">–</span></div>
+    <div class="chip"><span class="ck">CVD</span><span class="cv" id="iCvd">–</span></div>
+    <div class="chip"><span class="ck">VOL</span><span class="cv" id="iVol">–</span></div>
+    <div class="chip"><span class="ck">OI REGIME</span><span class="cv" id="iOi">–</span></div>
+    <div class="chip"><span class="ck">FUNDING</span><span class="cv" id="iFund">–</span></div>
+    <div class="chip"><span class="ck">SESSION</span><span class="cv" id="iSess">–</span></div>
+  </div>
+
+  <div class="sbar">
+    <span id="sTxt">Verbinde…</span>
+    <span id="sTime"></span>
+  </div>
+
+  <div class="foot">
+    ~52–58% Trefferquote · Kein Finanzrat · SIMULATION ·
+    <a href="/index.html">Chat ↗</a>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-ov" id="modalOv">
+  <div class="modal">
+    <h2>⚙ Backend-URL</h2>
+    <label>Backend-URL (leer lassen für Web-Modus)</label>
+    <input type="url" id="urlInp" placeholder="http://localhost:8787"
+      autocomplete="off" autocorrect="off" spellcheck="false">
+    <p class="modal-hint">
+      Android / Termux: <code>http://localhost:8787</code><br>
+      Web-Modus (gleicher Server): Feld leer lassen.
+    </p>
+    <div class="modal-btns">
+      <button class="mbtn" id="cancelBtn">Abbrechen</button>
+      <button class="mbtn ok" id="saveBtn">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE_KEY = 'btc_backend';
+const POLL_MS   = 5000;
+
+function base()       { return localStorage.getItem(STORE_KEY) || ''; }
+function api(path)    { return base() + path; }
+
+// ── Settings modal ──────────────────────────────────────────────────────────
+const modalOv  = document.getElementById('modalOv');
+document.getElementById('cfgBtn').addEventListener('click', () => {
+  document.getElementById('urlInp').value = base();
+  modalOv.classList.add('open');
+});
+document.getElementById('cancelBtn').addEventListener('click', () => modalOv.classList.remove('open'));
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const v = document.getElementById('urlInp').value.trim().replace(/\/$/, '');
+  v ? localStorage.setItem(STORE_KEY, v) : localStorage.removeItem(STORE_KEY);
+  modalOv.classList.remove('open');
+  fetchUpdate();
+});
+modalOv.addEventListener('click', e => { if (e.target === modalOv) modalOv.classList.remove('open'); });
+
+// ── Clock ───────────────────────────────────────────────────────────────────
+function tick() {
+  document.getElementById('clk').textContent =
+    new Date().toLocaleTimeString('de-CH', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(tick, 1000);
+tick();
+
+// ── Visual helpers ──────────────────────────────────────────────────────────
+const DIR_TEXT = { long:'LONG', short:'SHORT', neutral:'NEUTRAL' };
+
+function signalColor(dir, score) {
+  if (dir === 'long')  return score >= 83 ? '#ffd700' : '#00cc88';
+  if (dir === 'short') return '#ff2244';
+  return '#445599';
+}
+
+function barBg(dir, score) {
+  if (score >= 83 && dir !== 'neutral') return 'linear-gradient(90deg,#996600,#ffd700)';
+  if (dir === 'long')  return 'linear-gradient(90deg,#005533,#00cc88)';
+  if (dir === 'short') return 'linear-gradient(90deg,#770011,#ff2244)';
+  return 'linear-gradient(90deg,#181833,#445599)';
+}
+
+function lblCls(l) {
+  return { GOLDGRUBE:'goldgrube', STARK:'stark', AKTIV:'aktiv', WARTEN:'warten' }[l] || 'warten';
+}
+
+// ── Card updater ────────────────────────────────────────────────────────────
+function updateCard(pfx, d) {
+  const dir   = d.direction || 'neutral';
+  const score = d.score ?? 0;
+  const lbl   = d.label   || 'WARTEN';
+  const active = lbl !== 'WARTEN';
+  const isGold = lbl === 'GOLDGRUBE';
+  const color  = signalColor(dir, score);
+
+  document.getElementById(pfx + 'Card').className =
+    'card' + (isGold ? ' c-gold' : active ? ' c-' + dir : '');
+
+  const dirEl = document.getElementById(pfx + 'Dir');
+  dirEl.textContent = DIR_TEXT[dir] || '––';
+  dirEl.className = 'dir ' + dir;
+
+  const rrEl = document.getElementById(pfx + 'RR');
+  if (d.targetRR && active) {
+    rrEl.textContent = 'R:R ' + d.targetRR + ':1';
+    rrEl.classList.add('show');
+  } else {
+    rrEl.classList.remove('show');
+  }
+
+  const bar = document.getElementById(pfx + 'Bar');
+  bar.style.width      = score + '%';
+  bar.style.background = barBg(dir, score);
+
+  const val = document.getElementById(pfx + 'Val');
+  val.textContent  = score;
+  val.style.color  = color;
+
+  const lblEl = document.getElementById(pfx + 'Lbl');
+  lblEl.textContent = lbl;
+  lblEl.className   = 'lbl ' + lblCls(lbl);
+
+  document.getElementById(pfx + 'Rec').textContent = d.recommendation || '';
+}
+
+// ── Indicator chip updater ──────────────────────────────────────────────────
+const OI_MAP = {
+  long_build:'LONG ▲', short_build:'SHORT ▲',
+  short_cover:'DECKG', long_exit:'EXIT', neutral:'NEUTRAL',
+};
+const FUND_MAP = {
+  extreme_positive:'EXTREM +', extreme_negative:'EXTREM −',
+  elevated:'ERHÖHT', depressed:'NIEDRIG', neutral:'NORMAL',
+};
+const SESS_MAP = {
+  eu_us_overlap:'EU/US 🔥', europe:'EUR',
+  us:'US', asia:'ASIA', dead_zone:'RUHIG', late_us:'SPÄT-US',
+};
+const VOL_MAP = { compressed:'TIEF ⚡', normal:'NORMAL', expanded:'HOCH' };
+
+function updateInds(ind) {
+  const ofiEl = document.getElementById('iOfi');
+  const z = ind.ofiZ;
+  ofiEl.textContent = (z >= 0 ? '+' : '') + z.toFixed(1);
+  ofiEl.className = 'cv ' + (z > 1.5 ? 'long' : z < -1.5 ? 'short' : '');
+
+  const cvdEl = document.getElementById('iCvd');
+  const isBuy = ind.cvdTrend === '▲';
+  cvdEl.textContent = isBuy ? '▲ KAUF' : '▼ VERK';
+  cvdEl.className = 'cv ' + (isBuy ? 'long' : 'short');
+
+  const volEl = document.getElementById('iVol');
+  volEl.textContent = VOL_MAP[ind.volatility] || ind.volatility;
+  volEl.className = 'cv ' + (ind.volatility === 'compressed' ? 'gold' : '');
+
+  const oiEl = document.getElementById('iOi');
+  oiEl.textContent = OI_MAP[ind.oiRegime] || ind.oiRegime;
+  oiEl.className = 'cv ' +
+    (ind.oiRegime === 'long_build'  || ind.oiRegime === 'short_cover' ? 'long'  :
+     ind.oiRegime === 'short_build' || ind.oiRegime === 'long_exit'   ? 'short' : '');
+
+  const fundEl = document.getElementById('iFund');
+  fundEl.textContent = FUND_MAP[ind.fundingSignal] || ind.fundingSignal;
+  fundEl.className = 'cv ' + (ind.fundingSignal?.includes('extreme') ? 'orange' : '');
+
+  const sessEl = document.getElementById('iSess');
+  sessEl.textContent = SESS_MAP[ind.session] || ind.session;
+  sessEl.className = 'cv ' + (ind.activityScore >= 72 ? 'long' : '');
+}
+
+// ── Fetch loop ──────────────────────────────────────────────────────────────
+let connected = false;
+
+async function fetchUpdate() {
+  try {
+    const r = await fetch(api('/api/dashboard/live'), {
+      signal: AbortSignal.timeout(4500),
+      cache:  'no-store',
+    });
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+
+    if (!connected) {
+      connected = true;
+      document.getElementById('liveBadge').className = 'live';
+    }
+
+    updateCard('phase', d.phase);
+    updateCard('wave',  d.wave);
+    updateInds(d.indicators);
+
+    const regLabel = { bull:'🟢 BULL', bear:'🔴 BEAR', ranging:'⚪ RANGE' };
+    document.getElementById('sTxt').textContent =
+      'Aktualisiert · ' + (regLabel[d.meta?.regime] || '⬤');
+    document.getElementById('sTime').textContent =
+      new Date(d.timestamp).toLocaleTimeString('de-CH',
+        { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+  } catch {
+    connected = false;
+    document.getElementById('liveBadge').className = 'live off';
+    document.getElementById('sTxt').textContent = 'Keine Verbindung – ⚙ Backend-URL prüfen';
+  }
+}
+
+fetchUpdate();
+setInterval(fetchUpdate, POLL_MS);
+</script>
+</body>
+</html>
