@@ -32,10 +32,10 @@ jobs:
           gradle-version: '8.10.2'
 
       - name: Build debug APK
-        run: gradle -p BtcGlasklarApk :app:assembleDebug --stacktrace
+        run: gradle -p BtcGlasklarApk clean :app:assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BTC-Glasklar-APK
+          name: BTC-Lern-Dashboard-V100
           path: BtcGlasklarApk/app/build/outputs/apk/debug/app-debug.apk
