@@ -7,10 +7,10 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "ch.steph.btclernapp"
+        applicationId "ch.steph.btcglasklar"
         minSdk 26
         targetSdk 35
-        versionCode 10
-        versionName "10.0"
+        versionCode 100
+        versionName "100.0"
     }
 }
