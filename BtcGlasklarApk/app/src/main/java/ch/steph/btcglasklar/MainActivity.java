@@ -3,6 +3,7 @@ package ch.steph.btcglasklar;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,7 +18,8 @@ import java.io.InputStream;
 
 public class MainActivity extends Activity {
     private WebView webView;
-    private static boolean backgroundRunning = false;
+    private static final String PREFS = "btc_glasklar_native_prefs";
+    private static final String KEY_BACKGROUND_RUNNING = "background_alarm_running";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,15 +54,29 @@ public class MainActivity extends Activity {
             }
             input.close();
             String html = output.toString("UTF-8");
-            html = html.replace("BTC Glasklar V101", "BTC Glasklar V102");
-            html = html.replace("BTC Glasklar V9", "BTC Glasklar V102");
-            html = html.replace("BTC GLASKLAR V100 FIX", "BTC Glasklar V102");
-            html = html.replace("Lernen dauerhaft · seit Installation", "Dauerlernen · Hintergrundalarm V102");
+            html = html.replace("BTC Glasklar V101", "BTC Glasklar V103");
+            html = html.replace("BTC Glasklar V102", "BTC Glasklar V103");
+            html = html.replace("BTC Glasklar V9", "BTC Glasklar V103");
+            html = html.replace("BTC GLASKLAR V100 FIX", "BTC Glasklar V103");
+            html = html.replace("Lernen dauerhaft · seit Installation", "Dauerlernen · Hintergrundalarm V103");
+            html = html.replace("Dauerlernen · Hintergrundalarm V102", "Dauerlernen · Hintergrundalarm V103");
             html = injectBackgroundAlarmUi(html);
-            webView.loadDataWithBaseURL("https://btc-glasklar-v102.local/", html, "text/html", "UTF-8", null);
+            webView.loadDataWithBaseURL("https://btc-glasklar-v103.local/", html, "text/html", "UTF-8", null);
         } catch (Exception e) {
-            webView.loadData("<h1>BTC Glasklar V102</h1><p>Hintergrundalarm bereit.</p>", "text/html", "UTF-8");
+            webView.loadData("<h1>BTC Glasklar V103</h1><p>Hintergrundalarm merkt den Status.</p>", "text/html", "UTF-8");
         }
+    }
+
+    private SharedPreferences prefs() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE);
+    }
+
+    private boolean isBackgroundAlarmMarkedRunning() {
+        return prefs().getBoolean(KEY_BACKGROUND_RUNNING, false);
+    }
+
+    private void setBackgroundAlarmMarkedRunning(boolean running) {
+        prefs().edit().putBoolean(KEY_BACKGROUND_RUNNING, running).apply();
     }
 
     private void requestNotificationPermissionIfNeeded() {
@@ -71,18 +87,19 @@ public class MainActivity extends Activity {
 
     private String injectBackgroundAlarmUi(String html) {
         String box = "<section class=\"card\" style=\"border:2px solid rgba(0,229,155,.45)\">" +
-                "<div class=\"lab\">V102 HINTERGRUNDALARM</div>" +
-                "<div class=\"details\">Läuft auch weiter, wenn du die App schliesst. Android zeigt dann oben eine dauerhafte Benachrichtigung.</div>" +
+                "<div class=\"lab\">V103 HINTERGRUNDALARM</div>" +
+                "<div class=\"details\">Läuft auch weiter, wenn du die App schliesst. Der Start-Status bleibt gespeichert und wird beim nächsten Öffnen wieder angezeigt.</div>" +
                 "<div class=\"row\" style=\"margin-top:12px\">" +
                 "<button id=\"bgStart\">☑ Hintergrundalarm starten</button>" +
                 "<button id=\"bgStop\">☐ Hintergrundalarm stoppen</button>" +
-                "</div><div id=\"bgState\" class=\"muted\" style=\"margin-top:10px\">Noch nicht gestartet.</div></section>";
+                "</div><div id=\"bgState\" class=\"muted\" style=\"margin-top:10px\">Status wird geladen ...</div></section>";
         String script = "<script>setTimeout(function(){" +
                 "var s=document.getElementById('bgStart'),t=document.getElementById('bgStop'),st=document.getElementById('bgState');" +
                 "function set(x){if(st)st.textContent=x;}" +
+                "function refresh(){try{set(AndroidBridge.isBackgroundRunning()?'Hintergrundalarm läuft bereits. Du darfst die App schliessen.':'Noch nicht gestartet.');}catch(e){set('Status nicht lesbar: '+e.message)}}" +
                 "if(s)s.onclick=function(){try{AndroidBridge.startBackgroundAlarm();set('Hintergrundalarm läuft. Du darfst die App schliessen.');}catch(e){set('Start nicht möglich: '+e.message)}};" +
                 "if(t)t.onclick=function(){try{AndroidBridge.stopBackgroundAlarm();set('Hintergrundalarm gestoppt.');}catch(e){set('Stopp nicht möglich: '+e.message)}};" +
-                "try{if(AndroidBridge.isBackgroundRunning())set('Hintergrundalarm läuft bereits.');}catch(e){}" +
+                "refresh();" +
                 "},700);</script>";
         if (html.contains("<div class=\"card\"><div class=\"row\"><input")) {
             return html.replaceFirst("<div class=\\\"card\\\"><div class=\\\"row\\\"><input", box + "<div class=\"card\"><div class=\"row\"><input") + script;
@@ -101,7 +118,7 @@ public class MainActivity extends Activity {
                 } else {
                     startService(intent);
                 }
-                backgroundRunning = true;
+                setBackgroundAlarmMarkedRunning(true);
             });
         }
 
@@ -111,13 +128,13 @@ public class MainActivity extends Activity {
                 Intent intent = new Intent(MainActivity.this, BackgroundSignalService.class);
                 intent.setAction(BackgroundSignalService.ACTION_STOP);
                 startService(intent);
-                backgroundRunning = false;
+                setBackgroundAlarmMarkedRunning(false);
             });
         }
 
         @JavascriptInterface
         public boolean isBackgroundRunning() {
-            return backgroundRunning;
+            return isBackgroundAlarmMarkedRunning();
         }
     }
 
