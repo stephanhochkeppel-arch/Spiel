@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'BtcGlasklarApk/**'
-      - 'BtcBacktest4Y/**'
       - '.github/workflows/build-btc-glasklar-apk.yml'
   workflow_dispatch:
 
@@ -38,22 +37,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BTC-Lern-Dashboard-V100
+          name: BTC-Glasklar-V101-Dauerlernen
           path: BtcGlasklarApk/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Python packages
-        run: pip install pandas numpy requests
-
-      - name: Run 6 year BTC backtest
-        run: python BtcBacktest4Y/backtest_btc_glasklar_6y.py
-
-      - name: Upload backtest results
-        uses: actions/upload-artifact@v4
-        with:
-          name: BTC-6Y-Backtest-Results
-          path: BtcBacktest4Y/out
