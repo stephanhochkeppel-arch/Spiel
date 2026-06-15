@@ -8,7 +8,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="BTC Glasklar V102"
+        android:label="BTC Glasklar V103"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity
