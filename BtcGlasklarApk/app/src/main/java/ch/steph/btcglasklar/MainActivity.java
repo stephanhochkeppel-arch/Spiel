@@ -54,17 +54,32 @@ public class MainActivity extends Activity {
             }
             input.close();
             String html = output.toString("UTF-8");
-            html = html.replace("BTC Glasklar V101", "BTC Glasklar V103");
-            html = html.replace("BTC Glasklar V102", "BTC Glasklar V103");
-            html = html.replace("BTC Glasklar V9", "BTC Glasklar V103");
-            html = html.replace("BTC GLASKLAR V100 FIX", "BTC Glasklar V103");
-            html = html.replace("Lernen dauerhaft · seit Installation", "Dauerlernen · Hintergrundalarm V103");
-            html = html.replace("Dauerlernen · Hintergrundalarm V102", "Dauerlernen · Hintergrundalarm V103");
+            html = html.replace("BTC Glasklar V101", "BTC Glasklar V104");
+            html = html.replace("BTC Glasklar V102", "BTC Glasklar V104");
+            html = html.replace("BTC Glasklar V103", "BTC Glasklar V104");
+            html = html.replace("BTC Glasklar V9", "BTC Glasklar V104");
+            html = html.replace("BTC GLASKLAR V100 FIX", "BTC Glasklar V104");
+            html = html.replace("Lernen dauerhaft · seit Installation", "Dauerlernen · Alarmstatus bleibt gespeichert V104");
+            html = html.replace("Dauerlernen · Hintergrundalarm V102", "Dauerlernen · Alarmstatus bleibt gespeichert V104");
+            html = html.replace("Dauerlernen · Hintergrundalarm V103", "Dauerlernen · Alarmstatus bleibt gespeichert V104");
+            html = persistNormalAlarmInHtml(html);
             html = injectBackgroundAlarmUi(html);
-            webView.loadDataWithBaseURL("https://btc-glasklar-v103.local/", html, "text/html", "UTF-8", null);
+            webView.loadDataWithBaseURL("https://btc-glasklar-v104.local/", html, "text/html", "UTF-8", null);
         } catch (Exception e) {
-            webView.loadData("<h1>BTC Glasklar V103</h1><p>Hintergrundalarm merkt den Status.</p>", "text/html", "UTF-8");
+            webView.loadData("<h1>BTC Glasklar V104</h1><p>Alarmstatus bleibt gespeichert.</p>", "text/html", "UTF-8");
         }
+    }
+
+    private String persistNormalAlarmInHtml(String html) {
+        html = html.replace(
+                "let timer=null,alarm=false,ctx=null,lastAlarm='',lastMs=0;",
+                "let timer=null,alarm=localStorage.getItem('btc_glasklar_alarm_on')==='1',ctx=null,lastAlarm='',lastMs=0;"
+        );
+        html = html.replace(
+                "$('alarm').onclick=()=>{alarm=!alarm;$('alarm').textContent=alarm?'☑ Alarm an':'☐ Alarm aus';$('alarm').className=alarm?'on':'';beep('buy')};",
+                "$('alarm').onclick=()=>{alarm=!alarm;localStorage.setItem('btc_glasklar_alarm_on',alarm?'1':'0');$('alarm').textContent=alarm?'☑ Alarm an':'☐ Alarm aus';$('alarm').className=alarm?'on':'';beep('buy')};setTimeout(()=>{$('alarm').textContent=alarm?'☑ Alarm an':'☐ Alarm aus';$('alarm').className=alarm?'on':'';},300);"
+        );
+        return html;
     }
 
     private SharedPreferences prefs() {
@@ -87,7 +102,7 @@ public class MainActivity extends Activity {
 
     private String injectBackgroundAlarmUi(String html) {
         String box = "<section class=\"card\" style=\"border:2px solid rgba(0,229,155,.45)\">" +
-                "<div class=\"lab\">V103 HINTERGRUNDALARM</div>" +
+                "<div class=\"lab\">V104 HINTERGRUNDALARM</div>" +
                 "<div class=\"details\">Läuft auch weiter, wenn du die App schliesst. Der Start-Status bleibt gespeichert und wird beim nächsten Öffnen wieder angezeigt.</div>" +
                 "<div class=\"row\" style=\"margin-top:12px\">" +
                 "<button id=\"bgStart\">☑ Hintergrundalarm starten</button>" +
