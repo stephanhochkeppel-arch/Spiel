@@ -1,0 +1,15 @@
+{
+  "name": "BTC Signale",
+  "short_name": "BTC",
+  "description": "Live BTC Mikrostruktur-Signale – Phase & Welle 0-100",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060608",
+  "theme_color": "#060608",
+  "lang": "de",
+  "icons": [
+    { "src": "/btc-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
